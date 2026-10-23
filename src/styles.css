@@ -22,3 +22,96 @@
 #home-page .plans{grid-template-columns:repeat(3,1fr)}
 @media(max-width:900px){.reel{grid-template-columns:repeat(3,1fr);gap:10px}.reel-label{font-size:17px;left:12px;bottom:12px}.reel-label:after{display:none}.reel-play{width:36px;height:36px;top:10px;right:10px}}
 @media(max-width:600px){.reel,.reel.n2{grid-template-columns:repeat(2,1fr)}.reel.n3>:last-child{grid-column:1/-1;max-width:calc(50% - 5px);justify-self:center}#home-page .plans{grid-template-columns:1fr}}
+/* ---- Mobile polish ---- */
+img,video{max-width:100%}
+.wrap{overflow-wrap:break-word}
+@media(max-width:900px){
+  .feature img{height:420px}
+  .hero-foot{margin-top:44px}
+}
+@media(max-width:600px){
+  .wrap{padding:0 18px}
+  .top{font-size:11px;letter-spacing:.06em;padding:8px 0}
+  .top .wrap{align-items:flex-start}
+  .top a{padding:4px 0}
+  .hero .wrap{padding-top:64px;padding-bottom:64px}
+  .hero h1{font-size:clamp(44px,14vw,59px)}
+  .head h2,.section h2{font-size:clamp(32px,9vw,44px)}
+  .page-hero{padding:56px 0 40px}
+  .page-hero h1{font-size:clamp(40px,12vw,56px)}
+  .actions .btn{flex:1 1 100%}
+  .feature img{height:auto;aspect-ratio:4/3}
+  .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .tile{aspect-ratio:1}
+  .tile:after{content:'';padding:0;height:40%}
+  .card{min-height:0;padding:24px 20px}
+  .card h3{margin-top:18px}
+  .card a,.price-card a{display:inline-block;padding:10px 0;margin-top:8px}
+  .footgrid a{margin:0;padding:8px 0}
+  .footgrid{gap:30px}
+  .contact-info .detail a{padding:4px 0}
+  .detail a{font-size:18px}
+  .filters{gap:8px}
+  .filter{padding:11px 14px}
+  .jump a{padding:11px 14px}
+  .chip{padding:11px 14px}
+  .banner{padding:50px 0}
+  .banner h2{font-size:clamp(30px,9vw,40px)}
+  .lightbox{padding:56px 10px 50px}
+  .lbbtn.prev,.lbbtn.next{top:auto;bottom:10px}
+  .lbbtn.prev{left:10px}.lbbtn.next{right:10px}
+  .caption{bottom:22px;left:64px;right:64px;text-align:center;font-size:12px}
+  .lightbox img,.lb-video{max-height:calc(100vh - 130px);max-height:calc(100dvh - 130px);max-width:100%}
+  .reel-label{font-size:16px}
+  .clients .wrap{gap:14px}
+  .policy ul{padding-left:16px}
+  .compare{grid-template-columns:1fr 1fr}
+}
+@media(max-width:360px){
+  .grid{gap:8px}
+  .brand span{font-size:15px}
+  .slots{grid-template-columns:repeat(2,1fr)}
+}
+/* ---- Compact phone layout (phones only; desktop and tablet untouched) ---- */
+@media(max-width:600px){
+  .section{padding:50px 0}
+  .head{margin-bottom:24px}
+  .head p{margin:0}
+  /* Home: service summary cards as a 2x2 grid */
+  #services .cards{grid-template-columns:1fr 1fr;gap:10px}
+  #services .card{padding:16px 14px}
+  #services .card .num{font-size:13px}
+  #services .card h3{font-size:16px;line-height:1.2;margin:8px 0 8px;flex:1}
+  #services .card .from{margin:0 0 6px;gap:6px}
+  #services .card .from strong{font-size:24px}
+  #services .card .from small{font-size:9px}
+  #services .card p{display:none}
+  #services .card a{font-size:11px;margin-top:0;padding:8px 0 0}
+  #services .actions{margin-top:20px!important}
+  /* Maintenance plans: one compact row per plan */
+  .plans{gap:10px}
+  .plans .plan{display:grid;grid-template-columns:1fr auto;column-gap:12px;align-items:center;padding:16px}
+  .plans .plan h4{margin:0;font-size:19px}
+  .plans .plan-cadence{margin:2px 0 0;grid-column:1;font-size:11px}
+  .plans .plan .price{grid-column:2;grid-row:1/3;margin:0;padding:0;border:0}
+  .plans .plan .price strong{font-size:32px}
+  .plans .plan ul{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:2px 14px;margin:12px 0 0;padding-top:12px;border-top:1px solid #363c41}
+  .plans .plan li{font-size:13px;padding:2px 0 2px 17px}
+  .plans .plan a{grid-column:1/-1;margin-top:6px;padding:8px 0 0}
+  .plans .plan.recommended .price{grid-row:2/4}
+  .plans .plan-badge{position:static;grid-column:1/-1;justify-self:start;margin:-4px 0 10px;padding:5px 9px}
+  .plans-note{margin-top:14px;font-size:13px}
+  /* Home: show only 3 recent-work photos */
+  #home-grid .tile:nth-child(n+4){display:none}
+  #home-grid .tile:first-child{grid-column:1/-1;aspect-ratio:16/10}
+  /* Footer */
+  .footer{padding:38px 0 18px}
+  .footgrid{grid-template-columns:1fr 1fr;gap:22px 16px}
+  .footgrid>div:first-child{grid-column:1/-1}
+  .footgrid .brand{font-size:15px}
+  .footgrid .brand img{height:40px;width:40px}
+  .footgrid p{font-size:13px;line-height:1.6;margin:10px 0 0}
+  .footgrid h4{font-size:16px;margin:0 0 4px}
+  .footgrid a{font-size:14px;padding:6px 0}
+  .copyright{margin-top:24px;padding-top:14px;font-size:11px}
+}
