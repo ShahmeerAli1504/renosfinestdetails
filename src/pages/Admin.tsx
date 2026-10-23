@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Overview } from './AdminOverview';
-import { Link } from '../lib/router';
+import { Calendar } from './AdminCalendar';
 import { BOOKING_TIMES, BUSINESS } from '../lib/business';
 
 type RequestStatus = 'new' | 'contacted' | 'scheduled' | 'completed' | 'archived';
@@ -153,14 +153,14 @@ function Login() {
 }
 
 function Dashboard({ email }: { email: string }) {
-  const [tab, setTab] = useState<'overview' | 'requests' | 'account'>('overview');
+  const [tab, setTab] = useState<'overview' | 'calendar' | 'requests'>('overview');
   return (
     <>
       <div className="admin-bar">
         <div className="filters" style={{ margin: 0 }}>
           <button className={'filter' + (tab === 'overview' ? ' active' : '')} onClick={() => setTab('overview')}>DASHBOARD</button>
+          <button className={'filter' + (tab === 'calendar' ? ' active' : '')} onClick={() => setTab('calendar')}>CALENDAR</button>
           <button className={'filter' + (tab === 'requests' ? ' active' : '')} onClick={() => setTab('requests')}>BOOKINGS &amp; REQUESTS</button>
-          <button className={'filter' + (tab === 'account' ? ' active' : '')} onClick={() => setTab('account')}>ACCOUNT</button>
         </div>
         <div className="admin-user">
           <span>{email}</span>
@@ -168,20 +168,19 @@ function Dashboard({ email }: { email: string }) {
         </div>
       </div>
       {tab === 'overview' && <Overview />}
+      {tab === 'calendar' && <CalendarTab />}
       {tab === 'requests' && <Requests />}
-      {tab === 'account' && <Account />}
     </>
   );
 }
 
 /* ---------------------------- Detail requests ---------------------------- */
 
-function Requests() {
+/** Loads every request/booking and exposes the edits the admin can make. Shared by the list and the calendar. */
+function useRequestData() {
   const [rows, setRows] = useState<QuoteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<RequestStatus | 'all' | 'open' | 'bookings' | 'unpaid'>('open');
-  const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -225,6 +224,29 @@ function Requests() {
     if (error) return setError(error.message);
     setRows((r) => r.filter((x) => x.id !== id));
   };
+
+  return { rows, loading, error, load, update, reschedule, remove };
+}
+
+function CalendarTab() {
+  const { rows, loading, error, load, update, reschedule, remove } = useRequestData();
+  return (
+    <>
+      {error && <p className="form-note admin-error">{error}</p>}
+      <Calendar
+        rows={rows.filter((r) => !isUnpaidBooking(r))}
+        loading={loading}
+        onRefresh={load}
+        renderCard={(r) => <RequestCard key={r.id} r={r} onUpdate={update} onDelete={remove} onReschedule={reschedule} />}
+      />
+    </>
+  );
+}
+
+function Requests() {
+  const { rows, loading, error, load, update, reschedule, remove } = useRequestData();
+  const [filter, setFilter] = useState<RequestStatus | 'all' | 'open' | 'bookings' | 'unpaid'>('open');
+  const [query, setQuery] = useState('');
 
   const real = rows.filter((r) => !isUnpaidBooking(r));
   const counts = STATUSES.reduce((acc, s) => ({ ...acc, [s]: real.filter((r) => r.status === s).length }), {} as Record<RequestStatus, number>);
@@ -503,43 +525,6 @@ function NotifyCustomer({ r, onClose }: { r: QuoteRequest; onClose: () => void }
         <button className="btn ghost" onClick={onClose}>DONE</button>
       </div>
     </div>
-  );
-}
-
-/* ------------------------------- Account -------------------------------- */
-
-function Account() {
-  const [msg, setMsg] = useState('');
-  const [error, setError] = useState('');
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const d = new FormData(form);
-    const pw = String(d.get('password'));
-    if (pw !== String(d.get('confirm'))) return setError('Passwords do not match.');
-    const { error } = await supabase!.auth.updateUser({ password: pw });
-    if (error) return setError(error.message);
-    setError('');
-    setMsg('Password updated.');
-    form.reset();
-  }
-  return (
-    <form className="form admin-login" onSubmit={onSubmit}>
-      <h3>CHANGE PASSWORD</h3>
-      <p>Use at least 8 characters.</p>
-      <div className="field">
-        <label htmlFor="new-pw">NEW PASSWORD</label>
-        <input id="new-pw" name="password" type="password" minLength={8} required autoComplete="new-password" />
-      </div>
-      <div className="field">
-        <label htmlFor="confirm-pw">CONFIRM PASSWORD</label>
-        <input id="confirm-pw" name="confirm" type="password" minLength={8} required autoComplete="new-password" />
-      </div>
-      <button className="btn" style={{ width: '100%' }}>UPDATE PASSWORD →</button>
-      {msg && <p className="form-note">{msg}</p>}
-      {error && <p className="form-note admin-error">{error}</p>}
-      <p className="form-note"><Link href="/">← Back to the website</Link></p>
-    </form>
   );
 }
 
