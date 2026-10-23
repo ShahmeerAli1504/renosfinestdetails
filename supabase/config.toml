@@ -1,0 +1,6 @@
+# Minimal Supabase CLI config. `supabase link` connects this folder to your hosted project.
+project_id = "renosfinestdetails"
+
+[functions.submit-request]
+# Public website form: the function does its own validation, spam and rate-limit checks.
+verify_jwt = false
