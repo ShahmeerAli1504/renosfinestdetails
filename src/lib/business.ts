@@ -10,10 +10,21 @@ export const BUSINESS = {
   facebook: 'https://www.facebook.com/renosfinestdetails',
   facebookHandle: '@renosfinestdetails',
   linktree: 'https://linktr.ee/RENOSFINESTDETAILS',
-  hours: '6:00 AM – 8:00 PM',
-  hoursNote: 'Hours may vary seasonally.',
+  hours: '6:00 AM – 8:00 PM, 7 days a week',
+  hoursShort: 'OPEN 7 DAYS, 6 AM – 8 PM',
+  hoursNote: 'Scheduled around your needs. Most details take 2–4 hours, so the latest start time is 4:00 PM.',
+  lastStart: '4:00 PM',
   serviceArea: 'Reno, Sparks, Carson City, Truckee & surrounding areas',
   deposit: 50,
+  /** Cancel or reschedule at least this many hours before the appointment for a deposit refund.
+   *  Keep in sync with CANCEL_HOURS in supabase/functions/create-booking/index.ts. */
+  cancelHours: 48,
+};
+
+/** The deposit policy, worded once for the whole site. */
+export const DEPOSIT_POLICY = {
+  refundable: `Cancel or reschedule at least ${BUSINESS.cancelHours} hours before your appointment and your deposit is refunded.`,
+  nonRefundable: `Cancellations or reschedules made less than ${BUSINESS.cancelHours} hours before your appointment are non-refundable.`,
 };
 
 /** Must match SERVICES in supabase/functions/submit-request/index.ts exactly. */
@@ -39,11 +50,12 @@ export const CONTACT_METHODS = ['Phone call', 'Text message', 'Email'];
  *  Must match SERVICES in supabase/functions/create-booking/index.ts exactly. */
 export const BOOKABLE_SERVICES = SERVICE_OPTIONS.slice(0, 10);
 
-/** Start times offered on the booking page (business hours 6 AM – 8 PM).
+/** Start times offered on the booking page. Open 6 AM – 8 PM, but a detail takes 2–4 hours,
+ *  so the last start time is 4 PM.
  *  Must match TIMES in supabase/functions/create-booking/index.ts exactly. */
 export const BOOKING_TIMES = [
   '6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM',
-  '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM',
+  '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM',
 ];
 
 /** Square Web Payments settings (public values; the access token stays server-side). */

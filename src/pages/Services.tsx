@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Link } from '../lib/router';
-import { ADD_ONS, BUSINESS, SERVICE_GROUPS } from '../lib/business';
+import { ADD_ONS, BUSINESS, DEPOSIT_POLICY, SERVICE_GROUPS } from '../lib/business';
 
 export function Services() {
   useEffect(() => {
@@ -78,8 +78,9 @@ export function Services() {
             </div>
             <ul>
               <li>A ${BUSINESS.deposit} deposit holds your date and time, and it goes toward your total.</li>
-              <li>Cancel 48+ hours in advance and your deposit is refunded.</li>
-              <li>Cancellations within 48 hours are non-refundable.</li>
+              <li>{DEPOSIT_POLICY.refundable}</li>
+              <li>{DEPOSIT_POLICY.nonRefundable}</li>
+              <li>Appointments start between 6:00 AM and {BUSINESS.lastStart}, 7 days a week. Most details take 2–4 hours.</li>
               <li>Pay your deposit securely online when you <Link href="/book">book</Link>.</li>
             </ul>
           </div>

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from '../lib/router';
 import { supabase } from '../lib/supabase';
-import { BOOKABLE_SERVICES, BOOKING_TIMES, BUSINESS, CONTACT_METHODS, SQUARE } from '../lib/business';
+import { BOOKABLE_SERVICES, BOOKING_TIMES, BUSINESS, CONTACT_METHODS, DEPOSIT_POLICY, SQUARE } from '../lib/business';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
@@ -227,8 +227,8 @@ export function Book() {
                 <Link className="btn" href="/">BACK TO HOME →</Link>
               </div>
               <p className="form-note" style={{ marginTop: 22 }}>
-                Need to change something? Call or text <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>. Cancel 48+ hours in
-                advance for a full deposit refund.
+                Need to cancel or reschedule? Call or text <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>.{' '}
+                {DEPOSIT_POLICY.refundable} {DEPOSIT_POLICY.nonRefundable}
               </p>
             </div>
           ) : !enabled ? (
@@ -292,7 +292,7 @@ export function Book() {
                   ) : (
                     <p className="form-note">Choose a date to see available times.</p>
                   )}
-                  <p className="form-note">Hours: {BUSINESS.hours}. {BUSINESS.hoursNote}</p>
+                  <p className="form-note">Open {BUSINESS.hours}. {BUSINESS.hoursNote}</p>
                 </div>
 
                 <div className="book-step">
@@ -346,8 +346,9 @@ export function Book() {
                   <label className="agree">
                     <input type="checkbox" name="agree" required />
                     <span>
-                      I understand the ${BUSINESS.deposit} deposit goes toward my total, is refundable if I cancel 48+ hours in advance, and is
-                      non-refundable within 48 hours.
+                      I agree to the deposit policy: the ${BUSINESS.deposit} deposit goes toward my total and is refundable if I cancel or
+                      reschedule at least {BUSINESS.cancelHours} hours before my appointment. Cancellations or reschedules made less than{' '}
+                      {BUSINESS.cancelHours} hours before are non-refundable.
                     </span>
                   </label>
                   <button className="btn" type="submit" disabled={paying || !cardReady} style={{ width: '100%', opacity: paying || !cardReady ? 0.7 : 1 }}>

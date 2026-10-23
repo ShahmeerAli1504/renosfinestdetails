@@ -28,7 +28,10 @@ const SERVICES = [
   'Boat Wash & Wax ($10/ft)',
 ];
 // Must match BOOKING_TIMES in src/lib/business.ts exactly.
-const TIMES = ['6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM', '5:00 PM'];
+// Open 6 AM – 8 PM; details take 2–4 hours, so the last start time is 4 PM.
+const TIMES = ['6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
+// Must match BUSINESS.cancelHours in src/lib/business.ts.
+const CANCEL_HOURS = 48;
 const METHODS = ['Phone call', 'Text message', 'Email'];
 const MAX_PER_HOUR_PER_IP = 8;
 const SQUARE_VERSION = '2024-10-17';
@@ -309,7 +312,7 @@ Deno.serve(async (req) => {
         ['Deposit paid', deposit],
       ])}
       <p>Juan will reach out to confirm the details. Final prices may vary depending on the size, condition, and services requested.</p>
-      <p style="font-size:13px;color:#555"><strong>Cancellation policy:</strong> cancel 48+ hours in advance for a full deposit refund. Cancellations within 48 hours are non-refundable.</p>
+      <p style="font-size:13px;color:#555"><strong>Cancellation &amp; rescheduling policy:</strong> cancel or reschedule at least ${CANCEL_HOURS} hours before your appointment and your deposit is refunded. Cancellations or reschedules made less than ${CANCEL_HOURS} hours before are non-refundable.</p>
       ${receiptUrl ? `<p><a href="${escapeHtml(receiptUrl)}">View your payment receipt</a></p>` : ''}
       <p>Questions or changes? Call or text <a href="tel:+17758570381">(775) 857-0381</a>${owner ? ` or reply to this email` : ''}.</p>
     </div>`;
@@ -318,7 +321,7 @@ Deno.serve(async (req) => {
     replyTo: owner ? { name: "Reno's Finest Details", address: owner } : undefined,
     subject: `Booking confirmed: ${prettyDate(data.preferred_date)} at ${data.preferred_time}`,
     html: customerHtml,
-    text: `You're booked! ${when}\nService: ${data.service}\nDeposit paid: ${deposit}\nCancel 48+ hours ahead for a full deposit refund; within 48 hours it's non-refundable.\nQuestions: (775) 857-0381`,
+    text: `You're booked! ${when}\nService: ${data.service}\nDeposit paid: ${deposit}\nCancel or reschedule at least ${CANCEL_HOURS} hours before your appointment for a deposit refund; within ${CANCEL_HOURS} hours it's non-refundable.\nQuestions: (775) 857-0381`,
   });
 
   return json(req, 200, { ok: true, id: rowId, receiptUrl, doubleBooked });

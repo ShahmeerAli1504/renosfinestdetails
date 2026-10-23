@@ -11,7 +11,7 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
     <>
       <div className="top">
         <div className="wrap">
-          <span>RENO • SPARKS • CARSON CITY • TRUCKEE • OPEN {BUSINESS.hours.toUpperCase()}</span>
+          <span>RENO • SPARKS • CARSON CITY • TRUCKEE • {BUSINESS.hoursShort}</span>
           <a href={BUSINESS.phoneHref}>CALL: {BUSINESS.phoneDisplay}</a>
         </div>
       </div>
@@ -47,7 +47,7 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
                 Owner-operated detailing by {BUSINESS.owner}. Serving {BUSINESS.serviceArea}.
               </p>
               <p>
-                Hours: {BUSINESS.hours}. {BUSINESS.hoursNote}
+                Hours: {BUSINESS.hours}. Last appointment starts at {BUSINESS.lastStart}.
               </p>
             </div>
             <div>

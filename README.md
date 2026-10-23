@@ -9,7 +9,7 @@ Full-stack site for Reno's Finest Details (mobile auto detailing, Reno NV).
   - an edge function `create-booking` for online booking: charges the $50 deposit through **Square**, saves the booking, and emails the owner and the customer
   - Storage bucket `gallery` for photos uploaded from the admin
   - Auth for the owner's admin login
-- **Admin dashboard:** `/admin` opens on an income dashboard (monthly income for the last 12 months, or weekly for a chosen month, plus income by service and upcoming bookings). The second tab manages bookings and quote requests: status, final total charged, notes, refunds and search. Income counts each job's final total, or the paid deposit until a total is entered.
+- **Admin dashboard:** `/admin` opens on an income dashboard (monthly income for the last 12 months, or weekly for a chosen month, plus income by service and upcoming bookings). The second tab manages bookings and quote requests: status, final total charged, notes, rescheduling, refunds and search. Income counts each job's final total, or the paid deposit until a total is entered.
 - **Gallery photos** are managed in code: add files to `public/assets` and list them in `src/lib/photos.ts` (plus a migration for the database list).
 
 ```
@@ -71,6 +71,9 @@ npm run dev                    # http://localhost:5173
 4. **Square (online booking).** In the Square Developer Dashboard → your app → **Credentials**, copy the **Production Access token** into `SQUARE_ACCESS_TOKEN` in `.env`. The application ID (`sq0idp-…`) and location ID (`L3ETSH83EM20E`) are already set. Run `npx supabase secrets set --env-file .env` again after adding it.
    - The booking page charges a **$50 deposit** (`DEPOSIT_CENTS=5000`), not the full price. If you change it, also change `deposit` in `src/lib/business.ts`.
    - Bookable services and start times live in `src/lib/business.ts` (`BOOKABLE_SERVICES`, `BOOKING_TIMES`) and must match `supabase/functions/create-booking/index.ts`.
+   - Hours are 6 AM – 8 PM, 7 days a week; the last bookable start time is 4 PM because a detail takes 2–4 hours.
+   - **Deposit policy:** refundable if the customer cancels or reschedules at least 48 hours before the appointment (`cancelHours` in `src/lib/business.ts` and `CANCEL_HOURS` in the `create-booking` function; change both together).
+   - **Rescheduling:** press **Reschedule** on a paid booking in `/admin`, pick the new date and time (booked times are greyed out), and save. The change is logged in the booking's notes, and you get one-tap buttons to text or email the customer the new time.
    - **Refunds:** refund the deposit in the Square Dashboard, then press **Mark refunded** on the booking in `/admin` to free the time slot.
    - **Testing without real charges:** create Sandbox credentials in the Developer Dashboard, set both `VITE_SQUARE_ENVIRONMENT` and `SQUARE_ENVIRONMENT` to `sandbox`, use the Sandbox application ID, location ID and access token, and pay with Square's test card `4111 1111 1111 1111`.
 5. Deploy both functions:

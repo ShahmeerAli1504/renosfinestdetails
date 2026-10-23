@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Overview } from './AdminOverview';
 import { Link } from '../lib/router';
+import { BOOKING_TIMES, BUSINESS } from '../lib/business';
 
 type RequestStatus = 'new' | 'contacted' | 'scheduled' | 'completed' | 'archived';
 const STATUSES: RequestStatus[] = ['new', 'contacted', 'scheduled', 'completed', 'archived'];
@@ -200,6 +201,24 @@ function Requests() {
     if (error) setError(error.message);
   };
 
+  /** Move a booking to a new date/time. Waits for the database so a taken slot is reported, not shown as saved. */
+  const reschedule = async (r: QuoteRequest, date: string, time: string): Promise<string | null> => {
+    const stamp = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const line = `Rescheduled ${stamp}: ${whenLabel(r.preferred_date, r.preferred_time)} → ${whenLabel(date, time)}`;
+    const patch: Partial<QuoteRequest> = {
+      preferred_date: date,
+      preferred_time: time,
+      notes: r.notes ? `${r.notes}\n${line}` : line,
+      ...(r.status === 'new' || r.status === 'contacted' ? { status: 'scheduled' as RequestStatus } : {}),
+    };
+    const { error } = await supabase!.from('quote_requests').update(patch).eq('id', r.id);
+    if (error) {
+      return error.code === '23505' ? 'That date and time is already booked. Pick another time.' : error.message;
+    }
+    setRows((all) => all.map((x) => (x.id === r.id ? { ...x, ...patch } : x)));
+    return null;
+  };
+
   const remove = async (id: string) => {
     if (!window.confirm('Delete this request permanently?')) return;
     const { error } = await supabase!.from('quote_requests').delete().eq('id', id);
@@ -260,7 +279,7 @@ function Requests() {
 
       <div className="admin-list">
         {shown.map((r) => (
-          <RequestCard key={r.id} r={r} onUpdate={update} onDelete={remove} />
+          <RequestCard key={r.id} r={r} onUpdate={update} onDelete={remove} onReschedule={reschedule} />
         ))}
       </div>
     </div>
@@ -271,12 +290,18 @@ function RequestCard({
   r,
   onUpdate,
   onDelete,
+  onReschedule,
 }: {
   r: QuoteRequest;
   onUpdate: (id: string, patch: Partial<QuoteRequest>) => void;
   onDelete: (id: string) => void;
+  onReschedule: (r: QuoteRequest, date: string, time: string) => Promise<string | null>;
 }) {
+  const [rescheduling, setRescheduling] = useState(false);
+  const [moved, setMoved] = useState(false);
+  const canReschedule = r.kind === 'booking' && r.payment_status === 'paid' && !['completed', 'archived'].includes(r.status);
   const [notes, setNotes] = useState(r.notes ?? '');
+  useEffect(() => setNotes(r.notes ?? ''), [r.notes]);
   const savedTotal = r.job_total_cents != null ? (r.job_total_cents / 100).toFixed(2) : '';
   const [total, setTotal] = useState(savedTotal);
   const totalCents = total.trim() === '' ? null : Math.round(Number(total) * 100);
@@ -328,6 +353,21 @@ function RequestCard({
         <dt>Contact via</dt><dd>{r.contact_method}</dd>
       </dl>
       {r.message && <div className="quote" style={{ marginTop: 16, whiteSpace: 'pre-wrap' }}>{r.message}</div>}
+      {rescheduling && (
+        <ReschedulePanel
+          r={r}
+          onCancel={() => setRescheduling(false)}
+          onSave={async (date, time) => {
+            const err = await onReschedule(r, date, time);
+            if (!err) {
+              setRescheduling(false);
+              setMoved(true);
+            }
+            return err;
+          }}
+        />
+      )}
+      {moved && !rescheduling && <NotifyCustomer r={r} onClose={() => setMoved(false)} />}
       <div className="field admin-total" style={{ marginTop: 18 }}>
         <label htmlFor={'total-' + r.id}>FINAL TOTAL CHARGED ($)</label>
         <input
@@ -348,6 +388,9 @@ function RequestCard({
       </div>
       <div className="admin-actions">
         <button className="btn" disabled={!dirty} style={{ opacity: dirty ? 1 : 0.5 }} onClick={() => onUpdate(r.id, { notes, job_total_cents: totalCents })}>SAVE</button>
+        {canReschedule && !rescheduling && (
+          <button className="btn ghost" onClick={() => { setRescheduling(true); setMoved(false); }}>RESCHEDULE</button>
+        )}
         <button className="btn ghost" onClick={() => onDelete(r.id)}>DELETE</button>
         {r.kind === 'booking' && r.payment_status === 'paid' && (
           <button
@@ -363,6 +406,103 @@ function RequestCard({
         {!r.email_sent && <span className="form-note">Email alert not sent for this one.</span>}
       </div>
     </article>
+  );
+}
+
+/* ------------------------------ Reschedule ------------------------------- */
+
+function ReschedulePanel({
+  r,
+  onCancel,
+  onSave,
+}: {
+  r: QuoteRequest;
+  onCancel: () => void;
+  onSave: (date: string, time: string) => Promise<string | null>;
+}) {
+  const [date, setDate] = useState(r.preferred_date ?? '');
+  const [time, setTime] = useState(r.preferred_time ?? '');
+  const [taken, setTaken] = useState<string[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  // Times already booked on the chosen date (this booking's own slot doesn't count).
+  useEffect(() => {
+    if (!date) return setTaken([]);
+    let live = true;
+    supabase!.rpc('booked_slots', { d: date }).then(({ data }) => {
+      if (!live) return;
+      const list = Array.isArray(data) ? (data as unknown[]).map((x) => (typeof x === 'string' ? x : (x as { booked_slots?: string })?.booked_slots ?? '')) : [];
+      setTaken(list.filter((t) => t && !(date === r.preferred_date && t === r.preferred_time)));
+    });
+    return () => {
+      live = false;
+    };
+  }, [date, r.preferred_date, r.preferred_time]);
+
+  // Keep a legacy time (e.g. an old 5:00 PM booking) selectable if it's the current one.
+  const times = r.preferred_time && !BOOKING_TIMES.includes(r.preferred_time) ? [...BOOKING_TIMES, r.preferred_time] : BOOKING_TIMES;
+  const unchanged = date === r.preferred_date && time === r.preferred_time;
+  const valid = !!date && !!time && !taken.includes(time) && !unchanged;
+
+  async function save() {
+    setBusy(true);
+    setError('');
+    const err = await onSave(date, time);
+    setBusy(false);
+    if (err) setError(err);
+  }
+
+  return (
+    <div className="admin-resched">
+      <div className="eyebrow">RESCHEDULE BOOKING</div>
+      <p className="form-note" style={{ margin: '4px 0 14px' }}>
+        Currently {whenLabel(r.preferred_date, r.preferred_time)}. The deposit stays with the booking.
+      </p>
+      <div className="fields">
+        <div className="field">
+          <label htmlFor={'rs-date-' + r.id}>NEW DATE</label>
+          <input id={'rs-date-' + r.id} type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor={'rs-time-' + r.id}>NEW START TIME</label>
+          <select id={'rs-time-' + r.id} value={time} onChange={(e) => setTime(e.target.value)}>
+            <option value="">Select a time</option>
+            {times.map((t) => (
+              <option key={t} value={t} disabled={taken.includes(t)}>
+                {t}{taken.includes(t) ? ' (booked)' : ''}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {error && <p className="form-note admin-error">{error}</p>}
+      <div className="admin-actions">
+        <button className="btn" disabled={!valid || busy} style={{ opacity: valid && !busy ? 1 : 0.5 }} onClick={save}>
+          {busy ? 'SAVING…' : 'SAVE NEW TIME'}
+        </button>
+        <button className="btn ghost" onClick={onCancel} disabled={busy}>CANCEL</button>
+      </div>
+    </div>
+  );
+}
+
+/** After a reschedule: one-tap text or email to the customer with the new time. */
+function NotifyCustomer({ r, onClose }: { r: QuoteRequest; onClose: () => void }) {
+  const first = r.name.split(' ')[0];
+  const when = whenLabel(r.preferred_date, r.preferred_time);
+  const msg = `Hi ${first}, this is ${BUSINESS.owner} from ${BUSINESS.name}. Your detail has been rescheduled to ${when}. Reply or call ${BUSINESS.phoneDisplay} if you have any questions. Thank you!`;
+  const subject = `Your detail has been rescheduled: ${when}`;
+  return (
+    <div className="admin-resched done">
+      <div className="eyebrow">MOVED TO {when.toUpperCase()}</div>
+      <p className="form-note" style={{ margin: '4px 0 14px' }}>Let {first} know about the new time:</p>
+      <div className="admin-actions">
+        <a className="btn" href={`sms:${r.phone}?&body=${encodeURIComponent(msg)}`}>TEXT {first.toUpperCase()}</a>
+        <a className="btn ghost" href={`mailto:${r.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(msg)}`}>EMAIL</a>
+        <button className="btn ghost" onClick={onClose}>DONE</button>
+      </div>
+    </div>
   );
 }
 
@@ -404,6 +544,12 @@ function Account() {
 }
 
 /* -------------------------------- utils --------------------------------- */
+
+function whenLabel(date: string | null | undefined, time: string | null | undefined) {
+  if (!date) return 'no date set';
+  const d = new Date(date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  return time ? `${d} at ${time}` : d;
+}
 
 function cap(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);

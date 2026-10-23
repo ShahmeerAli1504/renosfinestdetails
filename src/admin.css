@@ -87,3 +87,8 @@
 .ov-who{display:flex;flex-direction:column;gap:2px;font-size:14px}
 @media(max-width:900px){.ov-stats{grid-template-columns:repeat(2,1fr)}.ov-stat.ov-hero{grid-column:1/-1}.ov-grid{grid-template-columns:1fr}}
 @media(max-width:600px){.ov-panel{padding:20px 16px}.ov-stat.ov-hero strong{font-size:38px}.ov-stat strong{font-size:26px}}
+
+.admin-resched{margin-top:18px;padding:18px;border:1px solid #4f9be0;background:#4f9be014}
+.admin-resched.done{border-color:#4fbf7a;background:#4fbf7a14}
+.admin-resched .fields{gap:12px}
+.admin-resched .btn{text-decoration:none}
