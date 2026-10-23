@@ -191,3 +191,12 @@
   .cal-nav h3{width:100%;margin:6px 0 0;font-size:24px}.cal-day{padding:20px}.cal-drawer{padding:16px}
   .cal-stats{grid-template-columns:1fr 1fr}
 }
+/* ---- Mobile polish ---- */
+.admin-list>*{min-width:0}
+.admin-req a,.admin-dl dd{overflow-wrap:anywhere}
+.ov-chart{overflow:hidden}
+@media(max-width:600px){
+  .admin-req{padding:22px 16px}
+  .admin-req-head{flex-wrap:wrap}
+  .admin-req-head select{max-width:100%}
+}
