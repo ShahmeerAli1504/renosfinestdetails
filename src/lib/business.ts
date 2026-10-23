@@ -39,6 +39,9 @@ export const SERVICE_OPTIONS = [
   'RV Wash Only ($7/ft)',
   'RV Wash & Wax ($9/ft)',
   'Boat Wash & Wax ($10/ft)',
+  'Maintenance Plan – Bi-Weekly ($90)',
+  'Maintenance Plan – Monthly ($120)',
+  'Maintenance Plan – Every 3 Weeks ($105)',
   'Add-Ons Only',
   'Fleet / Commercial',
   'Other / Not Sure',
@@ -48,7 +51,7 @@ export const CONTACT_METHODS = ['Phone call', 'Text message', 'Email'];
 
 /** Services customers can book and pay a deposit for online.
  *  Must match SERVICES in supabase/functions/create-booking/index.ts exactly. */
-export const BOOKABLE_SERVICES = SERVICE_OPTIONS.slice(0, 10);
+export const BOOKABLE_SERVICES = SERVICE_OPTIONS.slice(0, 13);
 
 /** Start times offered on the booking page. Open 6 AM – 8 PM, but a detail takes 2–4 hours,
  *  so the last start time is 4 PM.
@@ -224,3 +227,33 @@ export const SERVICE_GROUPS: ServiceGroup[] = [
     ],
   },
 ];
+
+/** Recurring maintenance plans (from the shop's Maintenance Package price list). */
+export type MaintenancePlan = { name: string; cadence: string; option: string; price: string; items: string[]; recommended?: boolean };
+
+export const MAINTENANCE_PLANS: MaintenancePlan[] = [
+  {
+    name: 'Bi-Weekly',
+    cadence: 'Every 2 weeks',
+    option: SERVICE_OPTIONS[10],
+    price: '$90',
+    items: ['Wipe down', 'Wash and wax', 'Vacuum'],
+  },
+  {
+    name: 'Monthly',
+    cadence: 'Once a month',
+    option: SERVICE_OPTIONS[11],
+    price: '$120',
+    items: ['Door jambs', 'Windows', 'Air scent'],
+    recommended: true,
+  },
+  {
+    name: '3 Weeks',
+    cadence: 'Every 3 weeks',
+    option: SERVICE_OPTIONS[12],
+    price: '$105',
+    items: ['Tire dressing', 'Tires and rims', 'Ceramic wax'],
+  },
+];
+
+export const MAINTENANCE_NOTE = 'Trucks, third-row and large vehicles: add $20.';

@@ -26,6 +26,9 @@ const SERVICES = [
   'RV Wash Only ($7/ft)',
   'RV Wash & Wax ($9/ft)',
   'Boat Wash & Wax ($10/ft)',
+  'Maintenance Plan – Bi-Weekly ($90)',
+  'Maintenance Plan – Monthly ($120)',
+  'Maintenance Plan – Every 3 Weeks ($105)',
 ];
 // Must match BOOKING_TIMES in src/lib/business.ts exactly.
 // Open 6 AM – 8 PM; details take 2–4 hours, so the last start time is 4 PM.

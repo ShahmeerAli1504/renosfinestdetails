@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from '../lib/router';
-import { ADD_ONS, BUSINESS, DEPOSIT_POLICY, SERVICE_GROUPS } from '../lib/business';
+import { ADD_ONS, BUSINESS, DEPOSIT_POLICY, MAINTENANCE_NOTE, SERVICE_GROUPS } from '../lib/business';
+import { MaintenancePlans } from '../components/MaintenancePlans';
 
 export function Services() {
   useEffect(() => {
@@ -20,6 +21,7 @@ export function Services() {
             {SERVICE_GROUPS.map((g) => (
               <Link key={g.id} href={'/services#svc-' + g.id}>{g.title}</Link>
             ))}
+            <Link href="/services#svc-maintenance">Maintenance Plans</Link>
             <Link href="/services#svc-addons">Add-Ons</Link>
             <Link href="/services#svc-booking">Booking</Link>
           </nav>
@@ -58,9 +60,19 @@ export function Services() {
             </div>
           ))}
 
-          <div className="price-group" id="svc-addons">
+          <div className="price-group" id="svc-maintenance">
             <div className="price-group-head">
               <span className="num">05 /</span>
+              <h3>Maintenance Plans</h3>
+              <p>Keep it looking freshly detailed with a regular visit. Pick the schedule that fits how you drive.</p>
+            </div>
+            <MaintenancePlans />
+            <p className="price-note">{MAINTENANCE_NOTE}</p>
+          </div>
+
+          <div className="price-group" id="svc-addons">
+            <div className="price-group-head">
+              <span className="num">06 /</span>
               <h3>Add-Ons</h3>
               <p>Add any of these to your detail. Ask us about pricing.</p>
             </div>

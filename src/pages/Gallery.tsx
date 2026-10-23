@@ -2,9 +2,14 @@ import { useEffect, useState } from 'react';
 import { Link } from '../lib/router';
 import { usePhotos, type Category } from '../lib/photos';
 import { PhotoGrid } from '../components/PhotoGrid';
+import { VideoReel } from '../components/VideoReel';
+import { VIDEOS } from '../lib/videos';
 
-const FILTERS: { key: 'all' | Category; label: string }[] = [
+type Filter = 'all' | 'videos' | Category;
+
+const FILTERS: { key: Filter; label: string }[] = [
   { key: 'all', label: 'ALL PROJECTS' },
+  { key: 'videos', label: 'VIDEOS' },
   { key: 'vehicles', label: 'VEHICLES' },
   { key: 'fleet', label: 'FLEET & RECREATION' },
   { key: 'interior', label: 'INTERIOR TRANSFORMATIONS' },
@@ -12,7 +17,7 @@ const FILTERS: { key: 'all' | Category; label: string }[] = [
 
 export function Gallery() {
   const photos = usePhotos();
-  const [filter, setFilter] = useState<'all' | Category>('all');
+  const [filter, setFilter] = useState<Filter>('all');
 
   // The original stylesheet shows #gallery-page only in body.gallery-mode.
   useEffect(() => {
@@ -23,7 +28,8 @@ export function Gallery() {
     };
   }, []);
 
-  const visible = photos.filter((p) => filter === 'all' || p.cat === filter);
+  const visible = filter === 'videos' ? [] : photos.filter((p) => filter === 'all' || p.cat === filter);
+  const visibleVideos = VIDEOS.filter((v) => filter === 'all' || filter === 'videos' || v.cat === filter);
 
   return (
     <main id="gallery-page">
@@ -31,7 +37,7 @@ export function Gallery() {
         <div className="wrap">
           <div className="eyebrow">OUR WORK</div>
           <h1>THE DETAIL GALLERY.</h1>
-          <p>Explore recent projects, fleet work, vehicle finishes, and interior transformations.</p>
+          <p>Explore recent projects, walk-around videos, fleet work, vehicle finishes, and interior transformations.</p>
         </div>
       </section>
       <section className="section">
@@ -43,7 +49,12 @@ export function Gallery() {
               </button>
             ))}
           </div>
-          <PhotoGrid key={filter} id="gallery-grid" photos={visible} />
+          {visibleVideos.length > 0 && (
+            <div className="gallery-videos">
+              <VideoReel key={'v-' + filter} videos={visibleVideos} />
+            </div>
+          )}
+          {visible.length > 0 && <PhotoGrid key={filter} id="gallery-grid" photos={visible} />}
           <div className="actions" style={{ justifyContent: 'center' }}>
             <Link href="/#contact" className="btn">REQUEST YOUR DETAIL ↗</Link>
           </div>

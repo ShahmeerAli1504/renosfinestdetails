@@ -2,7 +2,10 @@ import { Link } from '../lib/router';
 import { usePhotos } from '../lib/photos';
 import { PhotoGrid } from '../components/PhotoGrid';
 import { QuoteForm } from '../components/QuoteForm';
-import { BUSINESS, CLIENTS } from '../lib/business';
+import { BUSINESS, CLIENTS, MAINTENANCE_NOTE } from '../lib/business';
+import { MaintenancePlans } from '../components/MaintenancePlans';
+import { VideoReel } from '../components/VideoReel';
+import { VIDEOS } from '../lib/videos';
 
 const SERVICE_SUMMARY = [
   {
@@ -98,7 +101,26 @@ export function Home() {
         </div>
       </section>
 
-      <section className="section alt" id="about">
+      <section className="section alt" id="maintenance">
+        <div className="wrap">
+          <div className="eyebrow">MAINTENANCE PACKAGES</div>
+          <div className="head">
+            <h2>
+              STAY DETAILED.
+              <br />
+              ALL YEAR LONG.
+            </h2>
+            <p>
+              Sign up for a recurring visit and your vehicle never falls behind. Choose every two weeks, every three
+              weeks, or once a month.
+            </p>
+          </div>
+          <MaintenancePlans />
+          <p className="plans-note">{MAINTENANCE_NOTE}</p>
+        </div>
+      </section>
+
+      <section className="section" id="about">
         <div className="wrap feature">
           <img src="/assets/work-23.webp" alt="Classic light-blue MGB roadster after detailing" />
           <div>
@@ -138,6 +160,21 @@ export function Home() {
             ))}
             <li>And many more</li>
           </ul>
+        </div>
+      </section>
+
+      <section className="section alt" id="videos">
+        <div className="wrap">
+          <div className="eyebrow">SEE IT IN MOTION</div>
+          <div className="head">
+            <h2>
+              FRESH OFF
+              <br />
+              THE DETAIL.
+            </h2>
+            <p>Walk around a few of our latest finishes, from a family SUV to a luxury motorhome and a classic GMC. Tap any clip to watch with sound.</p>
+          </div>
+          <VideoReel videos={VIDEOS} />
         </div>
       </section>
 
