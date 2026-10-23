@@ -61,7 +61,7 @@ export function QuoteForm() {
     form.reset();
     setStatus({
       kind: 'sent',
-      text: "Thank you! Your detail request has been sent. We'll follow up soon using your preferred contact method to discuss the job, availability, and your quote.",
+      text: `Thank you! Your detail request has been sent. We'll follow up soon using your preferred contact method to confirm the job, availability, and your price. A $${BUSINESS.deposit} deposit secures your date.`,
     });
   }
 
@@ -90,11 +90,11 @@ export function QuoteForm() {
         </div>
         <div className="field">
           <label htmlFor="location">CITY / AREA *</label>
-          <input id="location" name="location" required maxLength={100} placeholder="Reno, Sparks, etc." />
+          <input id="location" name="location" required maxLength={100} placeholder="Reno, Sparks, Carson City, Truckee…" />
         </div>
         <div className="field">
-          <label htmlFor="vehicle">VEHICLE YEAR / MAKE / MODEL *</label>
-          <input id="vehicle" name="vehicle" required maxLength={150} placeholder="2022 Ford Explorer" />
+          <label htmlFor="vehicle">VEHICLE / RV / BOAT *</label>
+          <input id="vehicle" name="vehicle" required maxLength={150} placeholder="2022 Ford Explorer, 34 ft RV…" />
         </div>
         <div className="field">
           <label htmlFor="service">SERVICE INTEREST *</label>
@@ -123,13 +123,13 @@ export function QuoteForm() {
             id="message"
             name="message"
             maxLength={2000}
-            placeholder="Vehicle condition, stains, pet hair, specific areas of concern, or questions..."
+            placeholder="Vehicle condition, stains, pet hair, add-ons you want (headlights, trim, odor…), or RV/boat length in feet."
           />
         </div>
         {/* Spam trap: hidden from people, bots tend to fill it in. */}
         <div aria-hidden="true" style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, overflow: 'hidden' }}>
-          <label htmlFor="company">Company</label>
-          <input id="company" name="company" tabIndex={-1} autoComplete="off" />
+          <label htmlFor="rfd-hp">Leave this empty</label>
+          <input id="rfd-hp" name="rfd_hp" type="text" tabIndex={-1} autoComplete="new-password" defaultValue="" />
         </div>
       </div>
       <button className="btn" type="submit" style={{ width: '100%', opacity: sending ? 0.7 : 1 }} disabled={sending}>

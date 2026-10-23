@@ -11,7 +11,7 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
     <>
       <div className="top">
         <div className="wrap">
-          <span>RENO, NEVADA • MOBILE DETAILING &amp; SURROUNDING AREAS</span>
+          <span>RENO • SPARKS • CARSON CITY • TRUCKEE • OPEN {BUSINESS.hours.toUpperCase()}</span>
           <a href={BUSINESS.phoneHref}>CALL: {BUSINESS.phoneDisplay}</a>
         </div>
       </div>
@@ -26,11 +26,11 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
           </button>
           <nav className={'links' + (open ? ' open' : '')}>
             <Link href="/#home" onClick={close}>HOME</Link>
-            <Link href="/#services" onClick={close}>SERVICES</Link>
+            <Link href="/services" onClick={close}>SERVICES &amp; PRICING</Link>
             <Link href="/gallery" onClick={close}>GALLERY</Link>
             <Link href="/#about" onClick={close}>ABOUT</Link>
             <Link href="/#contact" onClick={close}>CONTACT</Link>
-            <Link className="btn" href="/#contact" onClick={close}>REQUEST A DETAIL ↗</Link>
+            <Link className="btn" href="/book" onClick={close}>BOOK NOW ↗</Link>
           </nav>
         </div>
       </header>
@@ -43,19 +43,27 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
                 <img src="/assets/logo.webp" alt="Reno's Finest Details logo" />
                 RENO'S FINEST DETAILS
               </div>
-              <p>Professional mobile auto detailing serving Reno and surrounding areas. Local care, standout results.</p>
+              <p>
+                Owner-operated detailing by {BUSINESS.owner}. Serving {BUSINESS.serviceArea}.
+              </p>
+              <p>
+                Hours: {BUSINESS.hours}. {BUSINESS.hoursNote}
+              </p>
             </div>
             <div>
               <h4>EXPLORE</h4>
               <Link href="/#home">Home</Link>
-              <Link href="/#services">Services</Link>
+              <Link href="/services">Services &amp; Pricing</Link>
+              <Link href="/#about">About Juan</Link>
               <Link href="/gallery">Gallery</Link>
-              <Link href="/#contact">Request a Detail</Link>
+              <Link href="/book">Book Online</Link>
+              <Link href="/#contact">Request a Quote</Link>
             </div>
             <div>
               <h4>CONNECT</h4>
               <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
               <a href={BUSINESS.instagram} target="_blank" rel="noopener">Instagram ↗</a>
+              <a href={BUSINESS.facebook} target="_blank" rel="noopener">Facebook ↗</a>
               <a href={BUSINESS.linktree} target="_blank" rel="noopener">Linktree ↗</a>
             </div>
           </div>

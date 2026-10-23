@@ -3,6 +3,8 @@ import { useLocation } from './lib/router';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Gallery } from './pages/Gallery';
+import { Services } from './pages/Services';
+import { Book } from './pages/Book';
 import { Admin } from './pages/Admin';
 import { NotFound } from './pages/NotFound';
 
@@ -31,6 +33,8 @@ export function App() {
   if (route === '/' && hash === '#gallery') page = <Gallery />;
   else if (route === '/') page = <Home />;
   else if (route === '/gallery') page = <Gallery />;
+  else if (route === '/services' || route === '/pricing') page = <Services />;
+  else if (route === '/book') page = <Book />;
   else if (route === '/admin') page = <Admin />;
   else page = <NotFound />;
 

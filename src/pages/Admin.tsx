@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { Session } from '@supabase/supabase-js';
-import { supabase, GALLERY_BUCKET } from '../lib/supabase';
-import { CATEGORY_LABELS, clearPhotoCache, rowToPhoto, type Category, type PhotoRow } from '../lib/photos';
+import { supabase } from '../lib/supabase';
+import { Overview } from './AdminOverview';
 import { Link } from '../lib/router';
 
 type RequestStatus = 'new' | 'contacted' | 'scheduled' | 'completed' | 'archived';
@@ -22,7 +22,17 @@ type QuoteRequest = {
   status: RequestStatus;
   notes: string | null;
   email_sent: boolean;
+  kind?: 'quote' | 'booking';
+  preferred_time?: string | null;
+  deposit_cents?: number | null;
+  payment_status?: 'pending' | 'paid' | 'failed' | 'refunded' | null;
+  square_payment_id?: string | null;
+  receipt_url?: string | null;
+  job_total_cents?: number | null;
 };
+
+/** Booking attempts that never got paid (declined cards, abandoned checkouts). */
+const isUnpaidBooking = (r: QuoteRequest) => r.kind === 'booking' && (r.payment_status === 'failed' || r.payment_status === 'pending');
 
 export function Admin() {
   const [session, setSession] = useState<Session | null>(null);
@@ -83,7 +93,7 @@ export function Admin() {
         <div className="wrap">
           <div className="eyebrow">OWNER DASHBOARD</div>
           <h1>ADMIN.</h1>
-          <p>Manage detail requests and the photo gallery.</p>
+          <p>Income, bookings and detail requests in one place.</p>
         </div>
       </section>
       <section className="section">
@@ -142,13 +152,13 @@ function Login() {
 }
 
 function Dashboard({ email }: { email: string }) {
-  const [tab, setTab] = useState<'requests' | 'gallery' | 'account'>('requests');
+  const [tab, setTab] = useState<'overview' | 'requests' | 'account'>('overview');
   return (
     <>
       <div className="admin-bar">
         <div className="filters" style={{ margin: 0 }}>
-          <button className={'filter' + (tab === 'requests' ? ' active' : '')} onClick={() => setTab('requests')}>DETAIL REQUESTS</button>
-          <button className={'filter' + (tab === 'gallery' ? ' active' : '')} onClick={() => setTab('gallery')}>GALLERY</button>
+          <button className={'filter' + (tab === 'overview' ? ' active' : '')} onClick={() => setTab('overview')}>DASHBOARD</button>
+          <button className={'filter' + (tab === 'requests' ? ' active' : '')} onClick={() => setTab('requests')}>BOOKINGS &amp; REQUESTS</button>
           <button className={'filter' + (tab === 'account' ? ' active' : '')} onClick={() => setTab('account')}>ACCOUNT</button>
         </div>
         <div className="admin-user">
@@ -156,8 +166,8 @@ function Dashboard({ email }: { email: string }) {
           <button className="filter" onClick={() => supabase!.auth.signOut()}>SIGN OUT</button>
         </div>
       </div>
+      {tab === 'overview' && <Overview />}
       {tab === 'requests' && <Requests />}
-      {tab === 'gallery' && <GalleryManager />}
       {tab === 'account' && <Account />}
     </>
   );
@@ -169,7 +179,7 @@ function Requests() {
   const [rows, setRows] = useState<QuoteRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [filter, setFilter] = useState<RequestStatus | 'all' | 'open'>('open');
+  const [filter, setFilter] = useState<RequestStatus | 'all' | 'open' | 'bookings' | 'unpaid'>('open');
   const [query, setQuery] = useState('');
 
   const load = useCallback(async () => {
@@ -197,11 +207,22 @@ function Requests() {
     setRows((r) => r.filter((x) => x.id !== id));
   };
 
-  const counts = STATUSES.reduce((acc, s) => ({ ...acc, [s]: rows.filter((r) => r.status === s).length }), {} as Record<RequestStatus, number>);
+  const real = rows.filter((r) => !isUnpaidBooking(r));
+  const counts = STATUSES.reduce((acc, s) => ({ ...acc, [s]: real.filter((r) => r.status === s).length }), {} as Record<RequestStatus, number>);
+  const paidBookings = rows.filter((r) => r.kind === 'booking' && r.payment_status === 'paid').length;
   const q = query.trim().toLowerCase();
   const shown = rows
+    .filter((r) => filter === 'all' || filter === 'unpaid' || !isUnpaidBooking(r))
     .filter((r) =>
-      filter === 'all' ? true : filter === 'open' ? !['completed', 'archived'].includes(r.status) : r.status === filter,
+      filter === 'all'
+        ? true
+        : filter === 'unpaid'
+          ? isUnpaidBooking(r)
+          : filter === 'bookings'
+            ? r.kind === 'booking' && r.payment_status !== 'refunded' && !['completed', 'archived'].includes(r.status)
+            : filter === 'open'
+              ? !['completed', 'archived'].includes(r.status)
+              : r.status === filter,
     )
     .filter((r) => !q || [r.name, r.email, r.phone, r.vehicle, r.location, r.service].join(' ').toLowerCase().includes(q));
 
@@ -210,7 +231,7 @@ function Requests() {
       <div className="statbar admin-stats">
         <div className="stat"><strong>{counts.new ?? 0}</strong><span>New</span></div>
         <div className="stat"><strong>{(counts.contacted ?? 0) + (counts.scheduled ?? 0)}</strong><span>In progress</span></div>
-        <div className="stat"><strong>{rows.length}</strong><span>Total requests</span></div>
+        <div className="stat"><strong>{paidBookings}</strong><span>Paid bookings</span></div>
       </div>
 
       <div className="admin-toolbar">
@@ -218,10 +239,12 @@ function Requests() {
           <label htmlFor="req-filter">SHOW</label>
           <select id="req-filter" value={filter} onChange={(e) => setFilter(e.target.value as typeof filter)}>
             <option value="open">Open (new, contacted, scheduled)</option>
+            <option value="bookings">Upcoming paid bookings ({paidBookings})</option>
             <option value="all">All</option>
             {STATUSES.map((s) => (
               <option key={s} value={s}>{cap(s)} ({counts[s] ?? 0})</option>
             ))}
+            <option value="unpaid">Unpaid booking attempts</option>
           </select>
         </div>
         <div className="field" style={{ margin: 0, flex: 1 }}>
@@ -254,13 +277,28 @@ function RequestCard({
   onDelete: (id: string) => void;
 }) {
   const [notes, setNotes] = useState(r.notes ?? '');
-  const dirty = notes !== (r.notes ?? '');
+  const savedTotal = r.job_total_cents != null ? (r.job_total_cents / 100).toFixed(2) : '';
+  const [total, setTotal] = useState(savedTotal);
+  const totalCents = total.trim() === '' ? null : Math.round(Number(total) * 100);
+  const totalValid = total.trim() === '' || (Number.isFinite(Number(total)) && Number(total) >= 0 && Number(total) < 100000);
+  const dirty = (notes !== (r.notes ?? '') || total !== savedTotal) && totalValid;
   return (
     <article className={'card admin-req status-' + r.status}>
       <div className="admin-req-head">
         <div>
           <span className="num">{new Date(r.created_at).toLocaleString()}</span>
           <h3>{r.name}</h3>
+          {r.kind === 'booking' && (
+            <span className={'admin-badge pay-' + (r.payment_status ?? 'pending')}>
+              {r.payment_status === 'paid'
+                ? `BOOKED · $${((r.deposit_cents ?? 0) / 100).toFixed(0)} DEPOSIT PAID`
+                : r.payment_status === 'refunded'
+                  ? 'BOOKING · DEPOSIT REFUNDED'
+                  : r.payment_status === 'failed'
+                    ? 'BOOKING · PAYMENT FAILED'
+                    : 'BOOKING · NOT PAID'}
+            </span>
+          )}
         </div>
         <select aria-label="Status" value={r.status} onChange={(e) => onUpdate(r.id, { status: e.target.value as RequestStatus })}>
           {STATUSES.map((s) => (
@@ -274,171 +312,55 @@ function RequestCard({
         <dt>Area</dt><dd>{r.location}</dd>
         <dt>Phone</dt><dd><a href={'tel:' + r.phone}>{r.phone}</a> · <a href={'sms:' + r.phone}>Text</a></dd>
         <dt>Email</dt><dd><a href={'mailto:' + r.email}>{r.email}</a></dd>
-        <dt>Preferred date</dt><dd>{r.preferred_date ? new Date(r.preferred_date + 'T12:00:00').toLocaleDateString() : 'Flexible'}</dd>
+        <dt>{r.kind === 'booking' ? 'Booked for' : 'Preferred date'}</dt>
+        <dd>
+          {r.preferred_date ? new Date(r.preferred_date + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Flexible'}
+          {r.preferred_time ? ` at ${r.preferred_time}` : ''}
+        </dd>
+        {r.square_payment_id && (
+          <>
+            <dt>Payment</dt>
+            <dd>
+              Square {r.square_payment_id.slice(0, 10)}…{r.receipt_url && <> · <a href={r.receipt_url} target="_blank" rel="noopener">Receipt</a></>}
+            </dd>
+          </>
+        )}
         <dt>Contact via</dt><dd>{r.contact_method}</dd>
       </dl>
       {r.message && <div className="quote" style={{ marginTop: 16, whiteSpace: 'pre-wrap' }}>{r.message}</div>}
-      <div className="field" style={{ marginTop: 18 }}>
+      <div className="field admin-total" style={{ marginTop: 18 }}>
+        <label htmlFor={'total-' + r.id}>FINAL TOTAL CHARGED ($)</label>
+        <input
+          id={'total-' + r.id}
+          type="number"
+          inputMode="decimal"
+          min="0"
+          step="0.01"
+          value={total}
+          onChange={(e) => setTotal(e.target.value)}
+          placeholder={r.kind === 'booking' && r.payment_status === 'paid' ? 'Full price incl. the $50 deposit' : 'Enter when the job is done'}
+        />
+        {!totalValid && <span className="form-note admin-error">Enter a dollar amount.</span>}
+      </div>
+      <div className="field">
         <label htmlFor={'notes-' + r.id}>INTERNAL NOTES</label>
         <textarea id={'notes-' + r.id} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Quote given, booked time, follow-up…" style={{ minHeight: 70 }} />
       </div>
       <div className="admin-actions">
-        <button className="btn" disabled={!dirty} style={{ opacity: dirty ? 1 : 0.5 }} onClick={() => onUpdate(r.id, { notes })}>SAVE NOTES</button>
+        <button className="btn" disabled={!dirty} style={{ opacity: dirty ? 1 : 0.5 }} onClick={() => onUpdate(r.id, { notes, job_total_cents: totalCents })}>SAVE</button>
         <button className="btn ghost" onClick={() => onDelete(r.id)}>DELETE</button>
+        {r.kind === 'booking' && r.payment_status === 'paid' && (
+          <button
+            className="btn ghost"
+            onClick={() => {
+              if (window.confirm('Mark this deposit as refunded? Refund it in your Square Dashboard first. This frees up the time slot.'))
+                onUpdate(r.id, { payment_status: 'refunded' });
+            }}
+          >
+            MARK REFUNDED
+          </button>
+        )}
         {!r.email_sent && <span className="form-note">Email alert not sent for this one.</span>}
-      </div>
-    </article>
-  );
-}
-
-/* ------------------------------- Gallery -------------------------------- */
-
-function GalleryManager() {
-  const [rows, setRows] = useState<PhotoRow[]>([]);
-  const [error, setError] = useState('');
-  const [msg, setMsg] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const load = useCallback(async () => {
-    const { data, error } = await supabase!
-      .from('gallery_photos')
-      .select('*')
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: true });
-    if (error) return setError(error.message);
-    setRows(data as PhotoRow[]);
-  }, []);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  async function upload(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const d = new FormData(form);
-    const files = (form.elements.namedItem('file') as HTMLInputElement).files;
-    if (!files || files.length === 0) return;
-    setBusy(true);
-    setError('');
-    setMsg('');
-    let order = rows.reduce((m, r) => Math.max(m, r.sort_order), 0);
-    for (const file of Array.from(files)) {
-      try {
-        const blob = await compressImage(file);
-        const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.webp`;
-        const up = await supabase!.storage.from(GALLERY_BUCKET).upload(path, blob, { contentType: 'image/webp', cacheControl: '604800' });
-        if (up.error) throw up.error;
-        order += 10;
-        const ins = await supabase!.from('gallery_photos').insert({
-          storage_path: path,
-          alt: String(d.get('alt') || '').trim() || file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' '),
-          category: d.get('category') as Category,
-          show_on_home: d.get('show_on_home') === 'on',
-          is_published: true,
-          sort_order: order,
-        });
-        if (ins.error) throw ins.error;
-      } catch (err) {
-        setError(`${file.name}: ${(err as Error).message}`);
-      }
-    }
-    setBusy(false);
-    form.reset();
-    clearPhotoCache();
-    setMsg('Upload complete.');
-    load();
-  }
-
-  async function save(row: PhotoRow) {
-    const { id, alt, category, sort_order, is_published, show_on_home } = row;
-    const { error } = await supabase!.from('gallery_photos').update({ alt, category, sort_order, is_published, show_on_home }).eq('id', id);
-    if (error) return setError(error.message);
-    clearPhotoCache();
-    setMsg('Saved.');
-    load();
-  }
-
-  async function remove(row: PhotoRow) {
-    if (!window.confirm('Delete this photo from the gallery?')) return;
-    if (row.storage_path) await supabase!.storage.from(GALLERY_BUCKET).remove([row.storage_path]);
-    const { error } = await supabase!.from('gallery_photos').delete().eq('id', row.id);
-    if (error) return setError(error.message);
-    clearPhotoCache();
-    load();
-  }
-
-  return (
-    <div>
-      <form className="form admin-upload" onSubmit={upload}>
-        <h3>ADD PHOTOS</h3>
-        <p>Images are resized and converted to WebP automatically before upload.</p>
-        <div className="fields">
-          <div className="field full">
-            <label htmlFor="up-file">PHOTO(S) *</label>
-            <input id="up-file" name="file" type="file" accept="image/*" multiple required />
-          </div>
-          <div className="field">
-            <label htmlFor="up-alt">DESCRIPTION</label>
-            <input id="up-alt" name="alt" placeholder="e.g. Black Tahoe after full detail" maxLength={160} />
-          </div>
-          <div className="field">
-            <label htmlFor="up-cat">CATEGORY</label>
-            <select id="up-cat" name="category" defaultValue="vehicles">
-              {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-          </div>
-          <label className="admin-check full">
-            <input type="checkbox" name="show_on_home" /> Also show on the home page “Recent Work” grid (first 6 are shown)
-          </label>
-        </div>
-        <button className="btn" disabled={busy} style={{ width: '100%' }}>{busy ? 'UPLOADING…' : 'UPLOAD →'}</button>
-        {msg && <p className="form-note">{msg}</p>}
-        {error && <p className="form-note admin-error">{error}</p>}
-      </form>
-
-      <div className="admin-photos">
-        {rows.map((row) => (
-          <PhotoEditor key={row.id + row.sort_order} row={row} onSave={save} onDelete={remove} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PhotoEditor({ row, onSave, onDelete }: { row: PhotoRow; onSave: (r: PhotoRow) => void; onDelete: (r: PhotoRow) => void }) {
-  const [r, setR] = useState(row);
-  const src = rowToPhoto(row).src;
-  return (
-    <article className={'admin-photo' + (r.is_published ? '' : ' unpublished')}>
-      <img src={src} alt={r.alt} loading="lazy" />
-      <div className="admin-photo-body">
-        <div className="field">
-          <label>DESCRIPTION</label>
-          <input value={r.alt} onChange={(e) => setR({ ...r, alt: e.target.value })} />
-        </div>
-        <div className="fields">
-          <div className="field">
-            <label>CATEGORY</label>
-            <select value={r.category} onChange={(e) => setR({ ...r, category: e.target.value as Category })}>
-              {Object.entries(CATEGORY_LABELS).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-          </div>
-          <div className="field">
-            <label>ORDER</label>
-            <input type="number" value={r.sort_order} onChange={(e) => setR({ ...r, sort_order: Number(e.target.value) })} />
-          </div>
-        </div>
-        <label className="admin-check"><input type="checkbox" checked={r.is_published} onChange={(e) => setR({ ...r, is_published: e.target.checked })} /> Published</label>
-        <label className="admin-check"><input type="checkbox" checked={r.show_on_home} onChange={(e) => setR({ ...r, show_on_home: e.target.checked })} /> On home page</label>
-        <div className="admin-actions">
-          <button className="btn" onClick={() => onSave(r)}>SAVE</button>
-          <button className="btn ghost" onClick={() => onDelete(r)}>DELETE</button>
-        </div>
       </div>
     </article>
   );
@@ -485,26 +407,4 @@ function Account() {
 
 function cap(s: string) {
   return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
-async function compressImage(file: File, max = 1800, quality = 0.82): Promise<Blob> {
-  const url = URL.createObjectURL(file);
-  try {
-    const img = await new Promise<HTMLImageElement>((res, rej) => {
-      const i = new Image();
-      i.onload = () => res(i);
-      i.onerror = () => rej(new Error('Could not read image'));
-      i.src = url;
-    });
-    const scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
-    const canvas = document.createElement('canvas');
-    canvas.width = Math.round(img.naturalWidth * scale);
-    canvas.height = Math.round(img.naturalHeight * scale);
-    canvas.getContext('2d')!.drawImage(img, 0, 0, canvas.width, canvas.height);
-    const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/webp', quality));
-    if (!blob) throw new Error('Could not convert image');
-    return blob;
-  } finally {
-    URL.revokeObjectURL(url);
-  }
 }

@@ -2,34 +2,42 @@ import { Link } from '../lib/router';
 import { usePhotos } from '../lib/photos';
 import { PhotoGrid } from '../components/PhotoGrid';
 import { QuoteForm } from '../components/QuoteForm';
-import { BUSINESS } from '../lib/business';
+import { BUSINESS, CLIENTS } from '../lib/business';
 
-const SERVICES = [
+const SERVICE_SUMMARY = [
   {
-    title: 'FULL DETAIL',
-    text: 'Comprehensive interior and exterior refresh to restore a clean, polished look throughout your vehicle.',
-    cta: 'REQUEST A QUOTE →',
+    id: 'interior',
+    title: 'INTERIOR ONLY',
+    unit: 'FROM',
+    price: '$120',
+    text: 'Vacuum, plastics, windows, vents and door jambs. Premium adds shampoo, stain and pet hair removal, and leather care.',
   },
   {
-    title: 'INTERIOR DEEP CLEAN',
-    text: 'Deep vacuuming, upholstery and carpet attention, targeted stain treatment, and steam cleaning where appropriate.',
-    cta: 'REQUEST A QUOTE →',
+    id: 'full',
+    title: 'EXTERIOR & INTERIOR',
+    unit: 'FROM',
+    price: '$165',
+    text: 'Hand wash and wax, wheels and tire shine, plus a full interior clean. Our most popular way to bring a vehicle back.',
   },
   {
-    title: 'EXTERIOR DETAIL',
-    text: 'Careful hand washing, grime removal, trim attention, wax and protective finish options.',
-    cta: 'REQUEST A QUOTE →',
+    id: 'paint',
+    title: 'PAINT ENHANCEMENT',
+    unit: 'FROM',
+    price: '$400',
+    text: 'Clay bar, decontamination, and one- or two-step polishing to remove swirls, scratches and oxidation.',
   },
   {
-    title: 'PAINT & PROTECTION',
-    text: 'Ask about paint correction, polishing, and ceramic coating options for your vehicle.',
-    cta: 'ASK ABOUT OPTIONS →',
+    id: 'rv-boat',
+    title: 'RV & BOAT',
+    unit: 'FROM',
+    price: '$7/ft',
+    text: 'Wash, or wash and wax, for motorhomes and boats, priced by the foot. Slide-outs, gutters, hulls and decks included.',
   },
 ];
 
 export function Home() {
   const photos = usePhotos();
-  const homePhotos = (photos.some((p) => p.showOnHome) ? photos.filter((p) => p.showOnHome) : photos).slice(0, 6);
+  const homePhotos = (photos.some((p) => p.showOnHome) ? photos.filter((p) => p.showOnHome) : photos).slice(0, 9);
 
   return (
     <main id="home-page">
@@ -42,17 +50,17 @@ export function Home() {
             <span>DONE RIGHT.</span>
           </h1>
           <p>
-            Premium interior and exterior care that brings back the shine, comfort, and pride in your ride. Professional
-            mobile detailing in Reno and surrounding areas.
+            True, high-level craftsmanship at an affordable price. Interior and exterior detailing, paint enhancement,
+            and RV and boat care for Reno, Sparks, Carson City, Truckee and surrounding areas.
           </p>
           <div className="actions">
-            <Link className="btn" href="/#contact">REQUEST YOUR DETAIL ↗</Link>
-            <Link className="btn ghost" href="/#services">EXPLORE SERVICES →</Link>
+            <Link className="btn" href="/book">BOOK YOUR DETAIL ↗</Link>
+            <Link className="btn ghost" href="/services">SEE SERVICES &amp; PRICING →</Link>
           </div>
           <div className="hero-foot">
             <span>LOCALLY OWNED</span>
-            <span>LICENSED &amp; INSURED</span>
-            <span>MOBILE CONVENIENCE</span>
+            <span>5+ YEARS EXPERIENCE</span>
+            <span>HUNDREDS OF VEHICLES DETAILED</span>
           </div>
         </div>
       </section>
@@ -64,49 +72,51 @@ export function Home() {
             <h2>
               EXCEPTIONAL CARE.
               <br />
-              INSIDE &amp; OUT.
+              HONEST PRICES.
             </h2>
             <p>
-              From everyday commuters to treasured classics and hard-working fleets, we tailor the detail to the vehicle
+              From everyday commuters and work trucks to motorhomes and boats, we tailor every detail to the vehicle
               and the finish you want.
             </p>
           </div>
           <div className="cards">
-            {SERVICES.map((s, i) => (
-              <article className="card" key={s.title}>
+            {SERVICE_SUMMARY.map((s, i) => (
+              <article className="card" key={s.id}>
                 <span className="num">0{i + 1} /</span>
                 <h3>{s.title}</h3>
+                <div className="from">
+                  <small>{s.unit}</small> <strong>{s.price}</strong>
+                </div>
                 <p>{s.text}</p>
-                <Link href="/#contact">{s.cta}</Link>
+                <Link href={'/services#svc-' + s.id}>SEE PACKAGES →</Link>
               </article>
             ))}
           </div>
-          <p className="form-note" style={{ marginTop: 22 }}>
-            Service availability and final pricing are confirmed directly by the business after reviewing your vehicle and
-            its condition.
-          </p>
+          <div className="actions" style={{ justifyContent: 'center', marginTop: 34 }}>
+            <Link className="btn" href="/services">VIEW FULL PRICING →</Link>
+          </div>
         </div>
       </section>
 
       <section className="section alt" id="about">
         <div className="wrap feature">
-          <img src="/assets/work-03.webp" alt="Detailed white GMC truck" />
+          <img src="/assets/work-23.webp" alt="Classic light-blue MGB roadster after detailing" />
           <div>
-            <div className="eyebrow">LOCAL ROOTS. PREMIUM RESULTS.</div>
+            <div className="eyebrow">MEET THE OWNER</div>
             <h2>
-              PROUD TO SERVE
+              HI, I'M {BUSINESS.owner.toUpperCase()}.
               <br />
-              THE RENO AREA.
+              WELCOME TO THE FINEST.
             </h2>
             <div className="line" />
             <p>
-              Reno's Finest Details is a locally owned mobile auto detailing business serving Reno, Nevada and
-              surrounding communities. We take pride in thoughtful workmanship, quality cleaning, and treating each
-              vehicle with the care it deserves.
+              I'm the owner and founder of Reno's Finest Details. I've been detailing for over 5 years and have detailed
+              hundreds of vehicles. I started this business with a simple mission: bring true, high-level craftsmanship
+              back to car care at an affordable price.
             </p>
             <p>
-              Whether it's your daily driver, family SUV, work truck, recreational vehicle, or a special project, our goal
-              is simple: help your vehicle look and feel its best.
+              Whether it's your daily driver, family SUV, work truck, RV, boat, or a special project, my goal is simple:
+              help your vehicle look and feel its best.
             </p>
             <div className="quote">
               “Had the honor and pleasure to detail two beautiful classics, a '67 Camino and a '51 GMC, featured at the
@@ -116,6 +126,18 @@ export function Home() {
               <Link href="/#contact" className="btn">GET IN TOUCH ↗</Link>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="clients">
+        <div className="wrap">
+          <span className="eyebrow">PROUD TO HAVE DETAILED FOR</span>
+          <ul>
+            {CLIENTS.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+            <li>And many more</li>
+          </ul>
         </div>
       </section>
 
@@ -149,8 +171,7 @@ export function Home() {
             <div className="line" />
             <p>
               We're proud to have supported the Reno Rodeo with a full interior and exterior service for seven Polaris
-              vehicles. Our team tackled caked-on mud, dust, and grime to help elevate their appearance and protect their
-              surfaces.
+              vehicles, and to have detailed for Sparks Marina RV Park, Pizzava, Cruz Construction, and local car clubs.
             </p>
             <p>
               Heavy buildup can contribute to stains and surface deterioration over time. Regular, careful detailing helps
@@ -172,8 +193,8 @@ export function Home() {
               A BETTER DRIVE.
             </h2>
             <p>
-              For tough interior stains, our process may include targeted enzyme treatment, citrus-based cleaning, steam,
-              and a finishing neutralization step as appropriate for the material.
+              Stains and pet hair are covered in every Premium package, or book Spot Cleaning ($115) for just the stains
+              on your seats or carpets.
             </p>
           </div>
           <div className="compare">
@@ -199,24 +220,27 @@ export function Home() {
               NEXT DETAIL.
             </h2>
             <p>
-              Tell us about your vehicle and the services you're interested in. We'll follow up to discuss the job,
-              availability, and a personalized quote.
+              Tell us about your vehicle and the services you're interested in. We'll follow up to confirm the job,
+              availability, and your price. Ready to lock in a date? <Link href="/book">Book online</Link> with a $
+              {BUSINESS.deposit} deposit.
             </p>
             <div className="detail">
               <small>CALL OR TEXT</small>
               <a href={BUSINESS.phoneHref}>{BUSINESS.phoneDisplay}</a>
             </div>
             <div className="detail">
-              <small>INSTAGRAM</small>
-              <a href={BUSINESS.instagram} target="_blank" rel="noopener">{BUSINESS.instagramHandle} ↗</a>
-            </div>
-            <div className="detail">
-              <small>MORE WAYS TO CONNECT</small>
-              <a href={BUSINESS.linktree} target="_blank" rel="noopener">VISIT OUR LINKTREE ↗</a>
+              <small>HOURS</small>
+              <span>{BUSINESS.hours}</span>
+              <span className="sub">{BUSINESS.hoursNote}</span>
             </div>
             <div className="detail">
               <small>SERVICE AREA</small>
-              <span>Reno, Nevada &amp; surrounding areas</span>
+              <span>{BUSINESS.serviceArea}</span>
+            </div>
+            <div className="detail">
+              <small>FOLLOW US</small>
+              <a href={BUSINESS.instagram} target="_blank" rel="noopener">Instagram {BUSINESS.instagramHandle} ↗</a>
+              <a href={BUSINESS.facebook} target="_blank" rel="noopener">Facebook {BUSINESS.facebookHandle} ↗</a>
             </div>
           </div>
           <QuoteForm />

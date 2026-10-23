@@ -32,7 +32,6 @@ export const CATEGORY_LABELS: Record<Category, string> = {
 /** The photos from the original site, used until Supabase is connected. */
 export const FALLBACK_PHOTOS: Photo[] = [
   { src: 'work-01.webp', alt: 'Polaris fleet vehicles at Reno Rodeo', cat: 'fleet' },
-  { src: 'work-02.webp', alt: 'Detailed custom-wrapped business vehicle', cat: 'vehicles' },
   { src: 'work-03.webp', alt: 'White GMC Denali pickup after detailing', cat: 'vehicles' },
   { src: 'work-04.webp', alt: 'White GMC pickup with a clean glossy finish', cat: 'vehicles' },
   { src: 'work-05.webp', alt: 'White Ford SUV in sunset light', cat: 'vehicles' },

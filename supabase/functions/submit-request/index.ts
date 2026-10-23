@@ -2,22 +2,32 @@
 // Validates a detail request from the website, stores it, and emails the owner.
 //
 // Secrets (supabase secrets set ...):
-//   RESEND_API_KEY   — from resend.com (optional; without it requests are still saved)
+//   SMTP_HOST        — smtp.gmail.com
+//   SMTP_PORT        — 465 (Supabase blocks outbound 25 and 587, so use 465 / SSL)
+//   SMTP_USER        — the Gmail address that sends the alerts
+//   SMTP_PASS        — a Gmail *App Password* for that account (not the normal password)
 //   OWNER_EMAIL      — where new-request alerts go (comma-separate for several)
-//   FROM_EMAIL       — verified sender, e.g. "Reno's Finest Details <requests@yourdomain.com>"
+//   FROM_NAME        — display name on the alert, e.g. Reno's Finest Details Website
 //   ALLOWED_ORIGINS  — optional, comma-separated, e.g. "https://renosfinestdetails.com,https://www.renosfinestdetails.com"
 // SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are provided automatically.
 
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import nodemailer from 'npm:nodemailer@6.9.16';
 
+// Must match SERVICE_OPTIONS in src/lib/business.ts exactly.
 const SERVICES = [
-  'Full Detail',
-  'Interior Deep Clean',
-  'Exterior Detail',
-  'Paint Correction / Polish',
-  'Ceramic Coating Inquiry',
+  'Interior Only – Standard ($120)',
+  'Interior Only – Premium ($190)',
+  'Spot Cleaning ($115)',
+  'Exterior & Interior – Standard ($165)',
+  'Exterior & Interior – Premium ($240)',
+  'One-Step Polish (from $400)',
+  'Two-Step Polish (from $600)',
+  'RV Wash Only ($7/ft)',
+  'RV Wash & Wax ($9/ft)',
+  'Boat Wash & Wax ($10/ft)',
+  'Add-Ons Only',
   'Fleet / Commercial',
-  'RV / Oversized Vehicle',
   'Other / Not Sure',
 ];
 const METHODS = ['Phone call', 'Text message', 'Email'];
@@ -70,7 +80,7 @@ Deno.serve(async (req) => {
   }
 
   // Honeypot: real visitors never fill this hidden field. Pretend success.
-  if (str(body.company, 200)) return json(req, 200, { ok: true });
+  if (str(body.rfd_hp, 200)) return json(req, 200, { ok: true });
 
   const data = {
     name: str(body.name, 100),
@@ -126,10 +136,11 @@ Deno.serve(async (req) => {
 
   // Email alert to the owner (best effort — the request is already saved).
   let emailed = false;
-  const apiKey = Deno.env.get('RESEND_API_KEY');
-  const to = (Deno.env.get('OWNER_EMAIL') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-  const from = Deno.env.get('FROM_EMAIL') ?? "Reno's Finest Details <onboarding@resend.dev>";
-  if (apiKey && to.length) {
+  const smtpUser = Deno.env.get('SMTP_USER') ?? '';
+  const smtpPass = (Deno.env.get('SMTP_PASS') ?? '').replace(/\s+/g, ''); // Gmail shows app passwords with spaces
+  const to = (Deno.env.get('OWNER_EMAIL') ?? smtpUser).split(',').map((s) => s.trim()).filter(Boolean);
+  const fromName = Deno.env.get('FROM_NAME') ?? "Reno's Finest Details Website";
+  if (smtpUser && smtpPass && to.length) {
     const rows: [string, string][] = [
       ['Name', data.name],
       ['Phone', data.phone],
@@ -159,22 +170,24 @@ Deno.serve(async (req) => {
       </div>`;
     const text = rows.map(([k, v]) => `${k}: ${v}`).join('\n');
     try {
-      const res = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          from,
-          to,
-          reply_to: data.email,
-          subject: `New detail request: ${data.name} — ${data.service}`,
-          html,
-          text,
-        }),
+      const port = Number(Deno.env.get('SMTP_PORT') ?? '465');
+      const transporter = nodemailer.createTransport({
+        host: Deno.env.get('SMTP_HOST') ?? 'smtp.gmail.com',
+        port,
+        secure: port === 465,
+        auth: { user: smtpUser, pass: smtpPass },
       });
-      emailed = res.ok;
-      if (!res.ok) console.error('resend failed', res.status, await res.text());
+      await transporter.sendMail({
+        from: { name: fromName, address: smtpUser }, // Gmail only sends as the signed-in address
+        to,
+        replyTo: { name: data.name, address: data.email },
+        subject: `New detail request: ${data.name} — ${data.service}`,
+        html,
+        text,
+      });
+      emailed = true;
     } catch (e) {
-      console.error('resend error', e);
+      console.error('gmail smtp error', e);
     }
     if (emailed) await supabase.from('quote_requests').update({ email_sent: true }).eq('id', row.id);
   }

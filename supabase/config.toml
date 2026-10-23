@@ -1,6 +1,11 @@
 # Minimal Supabase CLI config. `supabase link` connects this folder to your hosted project.
 project_id = "renosfinestdetails"
+# Hosted project ref: mdredbyhhmaeqenqpnlq  →  npx supabase link --project-ref mdredbyhhmaeqenqpnlq
 
 [functions.submit-request]
 # Public website form: the function does its own validation, spam and rate-limit checks.
+verify_jwt = false
+
+[functions.create-booking]
+# Public booking page: validates input, checks the slot, and charges the deposit through Square.
 verify_jwt = false
