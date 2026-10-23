@@ -9,7 +9,7 @@ Full-stack site for Reno's Finest Details (mobile auto detailing, Reno NV).
   - an edge function `create-booking` for online booking: charges the $50 deposit through **Square**, saves the booking, and emails the owner and the customer
   - Storage bucket `gallery` for photos uploaded from the admin
   - Auth for the owner's admin login
-- **Admin dashboard:** `/admin` opens on an income dashboard (monthly income for the last 12 months, or weekly for a chosen month, plus income by service and upcoming bookings). The second tab manages bookings and quote requests: status, final total charged, notes, rescheduling, refunds and search. Income counts each job's final total, or the paid deposit until a total is entered.
+- **Admin dashboard:** `/admin` opens on an income dashboard (monthly income for the last 12 months, or weekly for a chosen month, plus income by service and upcoming bookings). The **Calendar** tab shows every booking in month, week (time-blocked, 6 AM – 8 PM) and list views, with month totals, open/booked start times for any day, and a click-through to each booking's full details (status, notes, final total, reschedule, refund). The next tab manages bookings and quote requests: status, final total charged, notes, rescheduling, refunds and search. Income counts each job's final total, or the paid deposit until a total is entered.
 - **Gallery photos** are managed in code: add files to `public/assets` and list them in `src/lib/photos.ts` (plus a migration for the database list).
 
 ```
