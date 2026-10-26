@@ -221,11 +221,11 @@ function useRequestData() {
     return null;
   };
 
-  /** Add a booking by hand (no deposit). Returns an error message, or null when saved. */
+  /** Add a booking by hand (deposit paid in person, or no deposit). Returns an error message, or null when saved. */
   const create = async (row: NewBookingInput): Promise<string | null> => {
     const { data, error } = await supabase!
       .from('quote_requests')
-      .insert({ ...row, kind: 'booking', payment_status: 'waived', status: 'scheduled', email_sent: false })
+      .insert({ ...row, kind: 'booking', status: 'scheduled', email_sent: false })
       .select('*')
       .single();
     if (error) return error.code === '23505' ? 'That date and time is already booked. Pick another time.' : error.message;
@@ -444,7 +444,7 @@ function RequestCard({
           <button
             className="btn ghost"
             onClick={() => {
-              if (window.confirm('Mark this deposit as refunded? Refund it in your Square Dashboard first. This frees up the time slot.'))
+              if (window.confirm(r.square_payment_id ? 'Mark this deposit as refunded? Refund it in your Square Dashboard first. This frees up the time slot.' : 'Mark this deposit as refunded? This frees up the time slot.'))
                 onUpdate(r.id, { payment_status: 'refunded' });
             }}
           >
@@ -569,7 +569,8 @@ function NotifyCustomer({ r, onClose }: { r: QuoteRequest; onClose: () => void }
 
 type NewBookingInput = Pick<
   QuoteRequest,
-  'name' | 'phone' | 'email' | 'location' | 'vehicle' | 'service' | 'preferred_date' | 'preferred_time' | 'contact_method' | 'message' | 'notes'
+  | 'name' | 'phone' | 'email' | 'location' | 'vehicle' | 'service' | 'preferred_date' | 'preferred_time' | 'contact_method' | 'message' | 'notes'
+  | 'payment_status' | 'deposit_cents'
 >;
 
 /** Owner adds a booking by hand (phone call, walk-in, regular). No deposit is taken. */
@@ -580,6 +581,10 @@ function NewBookingPanel({ onCreate, onClose }: { onCreate: (row: NewBookingInpu
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState<QuoteRequest | null>(null);
+  const [deposit, setDeposit] = useState<'none' | 'paid'>('none');
+  const [depositAmt, setDepositAmt] = useState('50');
+  const depositCents = Math.round(Number(depositAmt) * 100);
+  const depositValid = deposit === 'none' || (Number.isFinite(depositCents) && depositCents > 0 && depositCents < 10000000);
 
   useEffect(() => {
     if (!date) return setTaken([]);
@@ -599,6 +604,8 @@ function NewBookingPanel({ onCreate, onClose }: { onCreate: (row: NewBookingInpu
     const d = new FormData(e.currentTarget);
     const str = (k: string) => String(d.get(k) ?? '').trim();
     if (taken.includes(time)) return setError('That date and time is already booked. Pick another time.');
+    if (!depositValid) return setError('Enter the deposit amount.');
+    const stamp = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
     const row: NewBookingInput = {
       name: str('name'),
       phone: str('phone'),
@@ -610,7 +617,12 @@ function NewBookingPanel({ onCreate, onClose }: { onCreate: (row: NewBookingInpu
       preferred_time: time,
       contact_method: str('contact_method') || 'Phone call',
       message: str('message') || null,
-      notes: `Added by owner in admin (no deposit) ${new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}`,
+      notes:
+        deposit === 'paid'
+          ? `Added by owner in admin ${stamp}. $${(depositCents / 100).toFixed(2)} deposit paid in person${str('deposit_via') ? ` (${str('deposit_via')})` : ''}.`
+          : `Added by owner in admin ${stamp}. No deposit.`,
+      payment_status: deposit === 'paid' ? 'paid' : 'waived',
+      deposit_cents: deposit === 'paid' ? depositCents : null,
     };
     setBusy(true);
     setError('');
@@ -641,7 +653,7 @@ function NewBookingPanel({ onCreate, onClose }: { onCreate: (row: NewBookingInpu
 
   return (
     <form className="admin-resched admin-newbooking" style={{ marginBottom: 24 }} onSubmit={onSubmit}>
-      <div className="eyebrow">NEW BOOKING · NO DEPOSIT</div>
+      <div className="eyebrow">NEW BOOKING</div>
       <p className="form-note" style={{ margin: '4px 0 14px' }}>For phone calls, walk-ins and regulars. The time slot is blocked on the website.</p>
       <div className="fields">
         <div className="field"><label htmlFor="nb-name">NAME</label><input id="nb-name" name="name" required maxLength={100} /></div>
@@ -672,6 +684,33 @@ function NewBookingPanel({ onCreate, onClose }: { onCreate: (row: NewBookingInpu
             {CONTACT_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
           </select>
         </div>
+        <div className="field">
+          <label htmlFor="nb-deposit">DEPOSIT</label>
+          <select id="nb-deposit" value={deposit} onChange={(e) => setDeposit(e.target.value as 'none' | 'paid')}>
+            <option value="none">Not paid / no deposit</option>
+            <option value="paid">Deposit paid</option>
+          </select>
+        </div>
+        {deposit === 'paid' && (
+          <>
+            <div className="field">
+              <label htmlFor="nb-deposit-amt">DEPOSIT AMOUNT ($)</label>
+              <input id="nb-deposit-amt" type="number" inputMode="decimal" min="0.01" step="0.01" required value={depositAmt} onChange={(e) => setDepositAmt(e.target.value)} />
+            </div>
+            <div className="field">
+              <label htmlFor="nb-deposit-via">PAID BY (OPTIONAL)</label>
+              <select id="nb-deposit-via" name="deposit_via" defaultValue="">
+                <option value="">—</option>
+                <option>Cash</option>
+                <option>Card in person</option>
+                <option>Zelle</option>
+                <option>Venmo</option>
+                <option>Cash App</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </>
+        )}
       </div>
       <div className="field">
         <label htmlFor="nb-message">DETAILS (OPTIONAL)</label>

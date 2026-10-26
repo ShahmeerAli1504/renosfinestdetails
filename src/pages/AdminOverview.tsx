@@ -183,7 +183,7 @@ export function Overview() {
         </div>
         <div className="ov-stat"><span>Jobs counted</span><strong>{jobs}</strong><small>Avg {jobs ? usd(income / jobs) : '$0'}</small></div>
         <div className="ov-stat"><span>Paid bookings</span><strong>{newBookings}</strong><small>Booked online</small></div>
-        <div className="ov-stat"><span>Deposits collected</span><strong>{usd(depositsCollected)}</strong><small>Through Square</small></div>
+        <div className="ov-stat"><span>Deposits collected</span><strong>{usd(depositsCollected)}</strong><small>Online + in person</small></div>
         <div className="ov-stat"><span>Quote requests</span><strong>{quotes}</strong><small>Received</small></div>
       </div>
 
