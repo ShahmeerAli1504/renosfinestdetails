@@ -200,3 +200,5 @@
   .admin-req-head{flex-wrap:wrap}
   .admin-req-head select{max-width:100%}
 }
+.admin-newbooking .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.admin-badge.pay-waived{color:#4f9be0;border-color:#4f9be0}

@@ -113,7 +113,7 @@ export function Calendar<T extends CalRow>({
     () =>
       rows
         .filter((r) => !!r.preferred_date)
-        .filter((r) => (isQuote(r) ? showQuotes : r.payment_status === 'paid' || r.payment_status === 'refunded'))
+        .filter((r) => (isQuote(r) ? showQuotes : r.payment_status === 'paid' || r.payment_status === 'waived' || r.payment_status === 'refunded'))
         .filter((r) => showCancelled || !isCancelled(r))
         .sort((a, b) => (a.preferred_date! + pad(hourOf(a.preferred_time) ?? 99)).localeCompare(b.preferred_date! + pad(hourOf(b.preferred_time) ?? 99))),
     [rows, showQuotes, showCancelled],
@@ -151,12 +151,12 @@ export function Calendar<T extends CalRow>({
   // Stats for the month being shown (bookings only, not quotes or cancellations).
   const monthKey = cursor.slice(0, 7);
   const monthBookings = rows.filter(
-    (r) => r.kind === 'booking' && r.payment_status === 'paid' && r.status !== 'archived' && r.preferred_date?.startsWith(monthKey),
+    (r) => r.kind === 'booking' && (r.payment_status === 'paid' || r.payment_status === 'waived') && r.status !== 'archived' && r.preferred_date?.startsWith(monthKey),
   );
   const busyDays = new Set(monthBookings.map((r) => r.preferred_date)).size;
   const deposits = monthBookings.reduce((s, r) => s + (r.deposit_cents ?? 0), 0);
   const completed = monthBookings.filter((r) => r.status === 'completed');
-  const earned = completed.reduce((s, r) => s + (r.job_total_cents ?? r.deposit_cents ?? 0), 0);
+  const earned = completed.reduce((s, r) => s + (r.job_total_cents ?? (r.payment_status === 'paid' ? r.deposit_cents ?? 0 : 0)), 0);
   const upcoming = monthBookings.filter((r) => r.preferred_date! >= today && r.status !== 'completed').length;
 
   const open = openId ? rows.find((r) => r.id === openId) ?? null : null;
@@ -425,6 +425,7 @@ function EventRow<T extends CalRow>({ r, onOpen }: { r: T; onOpen: (r: T) => voi
       <div className="cal-event-side">
         <span className={'cal-tag t-' + tone(r)}>{statusLabel(r)}</span>
         {r.kind === 'booking' && r.payment_status === 'paid' && <span>{money(r.deposit_cents ?? 0)} deposit</span>}
+        {r.kind === 'booking' && r.payment_status === 'waived' && <span>No deposit</span>}
         {r.job_total_cents != null && <span>Total {money(r.job_total_cents)}</span>}
         <span>{r.phone}</span>
       </div>

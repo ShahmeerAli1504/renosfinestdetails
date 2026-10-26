@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
     .from('quote_requests')
     .select('id', { count: 'exact', head: true })
     .eq('kind', 'booking')
-    .eq('payment_status', 'paid')
+    .in('payment_status', ['paid', 'waived'])
     .eq('preferred_date', data.preferred_date)
     .eq('preferred_time', data.preferred_time);
   if ((taken ?? 0) > 0) {

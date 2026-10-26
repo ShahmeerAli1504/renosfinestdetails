@@ -62,10 +62,13 @@ export const BOOKING_TIMES = [
 ];
 
 /** Square Web Payments settings (public values; the access token stays server-side). */
+const SQUARE_APP_ID = ((import.meta.env.VITE_SQUARE_APPLICATION_ID as string | undefined) ?? '').trim();
 export const SQUARE = {
-  applicationId: (import.meta.env.VITE_SQUARE_APPLICATION_ID as string | undefined) ?? '',
-  locationId: (import.meta.env.VITE_SQUARE_LOCATION_ID as string | undefined) ?? '',
-  sandbox: ((import.meta.env.VITE_SQUARE_ENVIRONMENT as string | undefined) ?? 'production').toLowerCase() === 'sandbox',
+  applicationId: SQUARE_APP_ID,
+  locationId: ((import.meta.env.VITE_SQUARE_LOCATION_ID as string | undefined) ?? '').trim(),
+  // The environment follows the application ID: Sandbox IDs start with "sandbox-", production IDs with "sq0idp-".
+  // This keeps the SDK script and the ID matched even if VITE_SQUARE_ENVIRONMENT is set wrong.
+  sandbox: SQUARE_APP_ID.startsWith('sandbox-'),
 };
 
 export const ADD_ONS = [

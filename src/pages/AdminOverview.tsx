@@ -140,7 +140,7 @@ export function Overview() {
   const depositsCollected = rows
     .filter((r) => r.kind === 'booking' && r.payment_status === 'paid' && inRange(r.created_at))
     .reduce((s, r) => s + (r.deposit_cents ?? 0), 0);
-  const newBookings = rows.filter((r) => r.kind === 'booking' && r.payment_status === 'paid' && inRange(r.created_at)).length;
+  const newBookings = rows.filter((r) => r.kind === 'booking' && (r.payment_status === 'paid' || r.payment_status === 'waived') && inRange(r.created_at)).length;
   const quotes = rows.filter((r) => (r.kind ?? 'quote') === 'quote' && inRange(r.created_at)).length;
 
   const byService = useMemo(() => {
@@ -151,7 +151,7 @@ export function Overview() {
 
   const today = todayStr();
   const upcoming = rows
-    .filter((r) => r.kind === 'booking' && r.payment_status === 'paid' && r.preferred_date && r.preferred_date >= today && r.status !== 'archived')
+    .filter((r) => r.kind === 'booking' && (r.payment_status === 'paid' || r.payment_status === 'waived') && r.preferred_date && r.preferred_date >= today && r.status !== 'archived')
     .sort((a, b) => (a.preferred_date! + (a.preferred_time ?? '')).localeCompare(b.preferred_date! + (b.preferred_time ?? '')))
     .slice(0, 6);
   const missingTotals = rows.filter((r) => r.status === 'completed' && !r.job_total_cents).length;
@@ -231,7 +231,7 @@ export function Overview() {
         <div className="admin-panel ov-panel">
           <h3>Upcoming bookings</h3>
           {upcoming.length === 0 ? (
-            <p className="lead" style={{ margin: 0 }}>No upcoming paid bookings.</p>
+            <p className="lead" style={{ margin: 0 }}>No upcoming bookings.</p>
           ) : (
             <ul className="ov-upcoming">
               {upcoming.map((r) => (
