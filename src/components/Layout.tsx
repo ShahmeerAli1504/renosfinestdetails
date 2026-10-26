@@ -68,7 +68,14 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
             </div>
           </div>
           <div className="copyright">
-            © <span id="year">{new Date().getFullYear()}</span> {BUSINESS.legalName}. All rights reserved.
+            <span>
+              © <span id="year">{new Date().getFullYear()}</span> {BUSINESS.legalName}. All rights reserved.
+            </span>
+            <a className="powered" href="https://www.nexoradigital.live/" target="_blank" rel="noopener" aria-label="Powered by Nexora Digital (opens in a new tab)">
+              <span>Powered by</span>
+              <img src="/assets/nexora-logo.webp" alt="" width="22" height="22" loading="lazy" />
+              <strong>Nexora Digital</strong>
+            </a>
           </div>
         </div>
       </footer>
