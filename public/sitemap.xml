@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+  <url>
+    <loc>https://renosfinestdetails.com/</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-08.webp</image:loc>
+      <image:title>Silver GMC Denali HD pickup exterior after detailing</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-23.webp</image:loc>
+      <image:title>Classic light-blue MGB roadster after detailing</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-01.webp</image:loc>
+      <image:title>Polaris fleet vehicles detailed for Reno Rodeo</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-10.webp</image:loc>
+      <image:title>Vehicle console before interior cleaning</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-11.webp</image:loc>
+      <image:title>Vehicle console after interior cleaning</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://renosfinestdetails.com/services</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://renosfinestdetails.com/gallery</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-03.webp</image:loc>
+      <image:title>White GMC Denali pickup after detailing</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-04.webp</image:loc>
+      <image:title>White GMC pickup with a clean glossy finish</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-05.webp</image:loc>
+      <image:title>White Ford SUV after detailing</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-07.webp</image:loc>
+      <image:title>Luxury motorhome exterior detailing</image:title>
+    </image:image>
+    <image:image>
+      <image:loc>https://renosfinestdetails.com/assets/work-09.webp</image:loc>
+      <image:title>Silver GMC truck after exterior detail</image:title>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://renosfinestdetails.com/book</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+</urlset>

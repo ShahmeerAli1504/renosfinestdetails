@@ -17,14 +17,14 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
       </div>
       <header>
         <div className="wrap nav">
-          <Link className="brand" href="/#home" onClick={close}>
-            <img src="/assets/logo.webp" alt="Reno's Finest Details logo" />
+          <Link className="brand" href="/" onClick={close} aria-label="Reno's Finest Details home">
+            <img src="/assets/logo.webp" alt="Reno's Finest Details logo" width="57" height="57" />
             <span>RENO'S FINEST DETAILS</span>
           </Link>
           <button className="hamb" aria-label="Toggle menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             ☰
           </button>
-          <nav className={'links' + (open ? ' open' : '')}>
+          <nav className={'links' + (open ? ' open' : '')} aria-label="Main">
             <Link href="/#home" onClick={close}>HOME</Link>
             <Link href="/services" onClick={close}>SERVICES &amp; PRICING</Link>
             <Link href="/gallery" onClick={close}>GALLERY</Link>
@@ -40,7 +40,7 @@ export function Layout({ children, path }: { children: ReactNode; path: string }
           <div className="footgrid">
             <div>
               <div className="brand">
-                <img src="/assets/logo.webp" alt="Reno's Finest Details logo" />
+                <img src="/assets/logo.webp" alt="" width="57" height="57" loading="lazy" decoding="async" />
                 RENO'S FINEST DETAILS
               </div>
               <p>

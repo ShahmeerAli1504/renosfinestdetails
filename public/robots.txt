@@ -1,3 +1,7 @@
+# Reno's Finest Details
 User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin/
+
+Sitemap: https://renosfinestdetails.com/sitemap.xml

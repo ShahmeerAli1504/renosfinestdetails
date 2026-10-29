@@ -1,13 +1,8 @@
-import { useEffect } from 'react';
 import { Link } from '../lib/router';
 import { ADD_ONS, BUSINESS, DEPOSIT_POLICY, MAINTENANCE_NOTE, SERVICE_GROUPS } from '../lib/business';
 import { MaintenancePlans } from '../components/MaintenancePlans';
 
 export function Services() {
-  useEffect(() => {
-    document.title = "Services & Pricing | Reno's Finest Details";
-  }, []);
-
   return (
     <main id="services-page">
       <section className="page-hero">

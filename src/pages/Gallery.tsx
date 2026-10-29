@@ -22,7 +22,6 @@ export function Gallery() {
   // The original stylesheet shows #gallery-page only in body.gallery-mode.
   useEffect(() => {
     document.body.classList.add('gallery-mode');
-    document.title = "Gallery | Reno's Finest Details";
     return () => {
       document.body.classList.remove('gallery-mode');
     };

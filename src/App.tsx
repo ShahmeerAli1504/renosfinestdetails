@@ -7,8 +7,7 @@ import { Services } from './pages/Services';
 import { Book } from './pages/Book';
 import { Admin } from './pages/Admin';
 import { NotFound } from './pages/NotFound';
-
-const HOME_TITLE = "Reno's Finest Details | Premium Mobile Auto Detailing Reno NV";
+import { applySeo } from './lib/seo';
 
 export function App() {
   const { path, hash, key } = useLocation();
@@ -21,7 +20,7 @@ export function App() {
   const route = path.replace(/\/+$/, '') || '/';
 
   useEffect(() => {
-    if (route === '/') document.title = HOME_TITLE;
+    applySeo(route);
     if (hash && hash !== '#gallery') {
       const t = setTimeout(() => document.querySelector(hash)?.scrollIntoView(), 20);
       return () => clearTimeout(t);

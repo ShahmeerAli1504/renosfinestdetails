@@ -122,7 +122,7 @@ export function Home() {
 
       <section className="section" id="about">
         <div className="wrap feature">
-          <img src="/assets/work-23.webp" alt="Classic light-blue MGB roadster after detailing" />
+          <img src="/assets/work-23.webp" alt="Classic light-blue MGB roadster after detailing" loading="lazy" decoding="async" />
           <div>
             <div className="eyebrow">MEET THE OWNER</div>
             <h2>
@@ -216,7 +216,7 @@ export function Home() {
             </p>
             <Link className="btn" href="/#contact">ASK ABOUT FLEET DETAILING →</Link>
           </div>
-          <img src="/assets/work-01.webp" alt="Polaris off-road utility vehicles serviced for Reno Rodeo" />
+          <img src="/assets/work-01.webp" alt="Polaris off-road utility vehicles serviced for Reno Rodeo" loading="lazy" decoding="async" />
         </div>
       </section>
 
@@ -236,11 +236,11 @@ export function Home() {
           </div>
           <div className="compare">
             <figure>
-              <img src="/assets/work-10.webp" alt="Vehicle center console before detailing" />
+              <img src="/assets/work-10.webp" alt="Vehicle center console before interior detailing in Reno" loading="lazy" decoding="async" />
               <figcaption>BEFORE</figcaption>
             </figure>
             <figure>
-              <img src="/assets/work-11.webp" alt="Vehicle center console after detailing" />
+              <img src="/assets/work-11.webp" alt="Vehicle center console after interior detailing in Reno" loading="lazy" decoding="async" />
               <figcaption>AFTER</figcaption>
             </figure>
           </div>

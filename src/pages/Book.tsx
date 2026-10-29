@@ -73,10 +73,6 @@ export function Book() {
   const [done, setDone] = useState<Done | null>(null);
   const cardRef = useRef<any>(null);
 
-  useEffect(() => {
-    document.title = "Book Online | Reno's Finest Details";
-  }, []);
-
   // Mount the Square card field.
   useEffect(() => {
     if (!enabled || done) return;
