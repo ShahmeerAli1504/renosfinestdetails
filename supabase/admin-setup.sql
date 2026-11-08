@@ -7,7 +7,7 @@
 do $$
 declare
   admin_email    text := 'renosfinestdetails@gmail.com';  -- ← the real admin email
-  admin_password text := 'RenoSFinestDetails2023!';                         -- ← a strong password (12+ characters)
+  admin_password text := 'renofinest775';                         -- ← a strong password (12+ characters)
   uid uuid;
 begin
   if admin_email like 'CHANGE_ME%' or admin_password = 'CHANGE_ME' or length(admin_password) < 12 then
