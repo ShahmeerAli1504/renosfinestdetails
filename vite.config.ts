@@ -59,9 +59,17 @@ function seoPages(): Plugin {
       const render = (p: PageSeo) => template.replace(re, headFor(p));
 
       for (const page of Object.values(PAGES)) {
-        const file = page.path === '/' ? join(outDir, 'index.html') : join(outDir, page.path.slice(1), 'index.html');
-        mkdirSync(join(file, '..'), { recursive: true });
-        writeFileSync(file, render(page));
+        if (page.path === '/') {
+          writeFileSync(join(outDir, 'index.html'), render(page));
+        } else {
+          const slug = page.path.slice(1);
+          // Write clean file at root for direct cleanUrls serving (200 OK without redirect)
+          writeFileSync(join(outDir, `${slug}.html`), render(page));
+          // Also write directory index as fallback
+          const dir = join(outDir, slug);
+          mkdirSync(dir, { recursive: true });
+          writeFileSync(join(dir, 'index.html'), render(page));
+        }
       }
       writeFileSync(join(outDir, '404.html'), render(NOT_FOUND));
     },

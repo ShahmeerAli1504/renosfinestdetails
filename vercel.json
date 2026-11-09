@@ -3,15 +3,18 @@
   "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
+  "cleanUrls": true,
+  "trailingSlash": false,
   "redirects": [
     { "source": "/pricing", "destination": "/services", "permanent": true },
     { "source": "/index.html", "destination": "/", "permanent": true }
   ],
   "rewrites": [
-    { "source": "/services", "destination": "/services/index.html" },
-    { "source": "/gallery", "destination": "/gallery/index.html" },
-    { "source": "/book", "destination": "/book/index.html" },
-    { "source": "/admin", "destination": "/admin/index.html" }
+    { "source": "/services", "destination": "/services.html" },
+    { "source": "/gallery", "destination": "/gallery.html" },
+    { "source": "/book", "destination": "/book.html" },
+    { "source": "/admin", "destination": "/admin/index.html" },
+    { "source": "/admin/(.*)", "destination": "/admin/index.html" }
   ],
   "headers": [
     {
