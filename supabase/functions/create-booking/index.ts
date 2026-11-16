@@ -33,8 +33,6 @@ const SERVICES = [
 // Must match BOOKING_TIMES in src/lib/business.ts exactly.
 // Open 6 AM – 8 PM; details take 2–4 hours, so the last start time is 4 PM.
 const TIMES = ['6:00 AM', '7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM'];
-// Dates closed to new online bookings (inclusive). Must match BLOCKED_DATES in src/lib/business.ts exactly.
-const BLOCKED_DATES = [{ from: '2026-11-01', to: '2026-11-09' }];
 // Must match BUSINESS.cancelHours in src/lib/business.ts.
 const CANCEL_HOURS = 48;
 const METHODS = ['Phone call', 'Text message', 'Email'];
@@ -141,9 +139,6 @@ Deno.serve(async (req) => {
   if (!SERVICES.includes(data.service)) errors.push('service');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data.preferred_date) || data.preferred_date <= todayPacific()) errors.push('date');
   if (!TIMES.includes(data.preferred_time)) errors.push('time');
-  if (BLOCKED_DATES.some((r) => data.preferred_date >= r.from && data.preferred_date <= r.to)) {
-    return json(req, 409, { ok: false, error: 'Sorry, that date is fully booked. Please choose another date.', slotTaken: true });
-  }
   if (!METHODS.includes(data.contact_method)) data.contact_method = 'Text message';
   if (body.agree !== true && body.agree !== 'true' && body.agree !== 'on') errors.push('agreement to the deposit policy');
   if (!sourceId) errors.push('card details');
@@ -175,6 +170,19 @@ Deno.serve(async (req) => {
     .gte('created_at', since);
   if ((count ?? 0) >= MAX_PER_HOUR_PER_IP) {
     return json(req, 429, { ok: false, error: 'Too many attempts — please try again later or call us.' });
+  }
+
+  // Date closed by the owner in /admin (blocked_dates, both ends inclusive)?
+  const { data: blocks, error: blockErr } = await supabase
+    .from('blocked_dates')
+    .select('id')
+    .lte('from_date', data.preferred_date)
+    .gte('to_date', data.preferred_date)
+    .limit(1);
+  // If the lookup itself fails, log it and carry on rather than taking online booking down.
+  if (blockErr) console.error('blocked_dates lookup failed', blockErr);
+  if ((blocks?.length ?? 0) > 0) {
+    return json(req, 409, { ok: false, error: 'Sorry, that date is fully booked. Please choose another date.', slotTaken: true });
   }
 
   // Slot still free?

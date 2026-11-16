@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Link } from '../lib/router';
 import { supabase } from '../lib/supabase';
-import { BOOKABLE_SERVICES, BOOKING_TIMES, BUSINESS, CONTACT_METHODS, DEPOSIT_POLICY, SQUARE, isBlockedDate } from '../lib/business';
+import { BOOKABLE_SERVICES, BOOKING_TIMES, BUSINESS, CONTACT_METHODS, DEPOSIT_POLICY, SQUARE, isBlockedDate, type BlockedRange } from '../lib/business';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 declare global {
@@ -109,7 +109,12 @@ export function Book() {
   useEffect(() => {
     refreshTaken(date);
   }, [date]);
-  const dayBlocked = isBlockedDate(date);
+  // Date ranges the owner has closed in /admin.
+  const [blocked, setBlocked] = useState<BlockedRange[]>([]);
+  useEffect(() => {
+    supabase?.rpc('blocked_ranges').then(({ data }) => setBlocked(Array.isArray(data) ? (data as BlockedRange[]) : []));
+  }, []);
+  const dayBlocked = isBlockedDate(date, blocked);
   useEffect(() => {
     if (time && (dayBlocked || taken.includes(time))) setTime('');
   }, [taken, time, dayBlocked]);

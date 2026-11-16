@@ -245,21 +245,182 @@ function useRequestData() {
 
 function CalendarTab() {
   const { rows, loading, error, load, update, reschedule, remove, create } = useRequestData();
+  const blocks = useBlockedDates();
   const [adding, setAdding] = useState(false);
+  const [blocking, setBlocking] = useState(false);
   return (
     <>
       {error && <p className="form-note admin-error">{error}</p>}
+      {blocks.error && <p className="form-note admin-error">Blocked dates: {blocks.error}</p>}
       <div className="admin-toolbar" style={{ justifyContent: 'flex-end' }}>
+        {!blocking && <button className="btn ghost" onClick={() => setBlocking(true)}>BLOCK DATES</button>}
         {!adding && <button className="btn" onClick={() => setAdding(true)}>+ NEW BOOKING</button>}
       </div>
+      {blocking && (
+        <BlockDatesPanel
+          blocks={blocks.rows}
+          bookings={rows.filter(isActiveBooking)}
+          onAdd={blocks.add}
+          onRemove={blocks.remove}
+          onClose={() => setBlocking(false)}
+        />
+      )}
       {adding && <NewBookingPanel onCreate={create} onClose={() => setAdding(false)} />}
       <Calendar
         rows={rows.filter((r) => !isUnpaidBooking(r))}
         loading={loading}
-        onRefresh={load}
+        onRefresh={() => {
+          load();
+          blocks.load();
+        }}
+        blocked={blocks.rows}
         renderCard={(r) => <RequestCard key={r.id} r={r} onUpdate={update} onDelete={remove} onReschedule={reschedule} />}
       />
     </>
+  );
+}
+
+/* ----------------------------- Blocked dates ----------------------------- */
+
+type BlockedDate = { id: string; from_date: string; to_date: string; reason: string | null };
+
+/** Date ranges closed to online bookings (blocked_dates table). */
+function useBlockedDates() {
+  const [rows, setRows] = useState<BlockedDate[]>([]);
+  const [error, setError] = useState('');
+
+  const load = useCallback(async () => {
+    const { data, error } = await supabase!.from('blocked_dates').select('id, from_date, to_date, reason').order('from_date');
+    if (error) return setError(error.message);
+    setError('');
+    setRows(data as BlockedDate[]);
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  /** Returns an error message, or null when saved. */
+  const add = async (from_date: string, to_date: string, reason: string | null): Promise<string | null> => {
+    const { data, error } = await supabase!.from('blocked_dates').insert({ from_date, to_date, reason }).select('id, from_date, to_date, reason').single();
+    if (error) return error.message;
+    setRows((all) => [...all, data as BlockedDate].sort((a, b) => a.from_date.localeCompare(b.from_date)));
+    return null;
+  };
+
+  const remove = async (id: string): Promise<string | null> => {
+    const { error } = await supabase!.from('blocked_dates').delete().eq('id', id);
+    if (error) return error.message;
+    setRows((all) => all.filter((x) => x.id !== id));
+    return null;
+  };
+
+  return { rows, error, load, add, remove };
+}
+
+function rangeLabel(from: string, to: string) {
+  const f = (s: string, year: boolean) =>
+    new Date(s + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', ...(year ? { year: 'numeric' } : {}) });
+  return from === to ? f(from, true) : `${f(from, from.slice(0, 4) !== to.slice(0, 4))} – ${f(to, true)}`;
+}
+
+/** Owner closes a stretch of days to online bookings, and reopens them. */
+function BlockDatesPanel({
+  blocks,
+  bookings,
+  onAdd,
+  onRemove,
+  onClose,
+}: {
+  blocks: BlockedDate[];
+  bookings: QuoteRequest[];
+  onAdd: (from: string, to: string, reason: string | null) => Promise<string | null>;
+  onRemove: (id: string) => Promise<string | null>;
+  onClose: () => void;
+}) {
+  const today = new Intl.DateTimeFormat('en-CA').format(new Date());
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  const end = to || from; // leaving "to" empty blocks a single day
+  const valid = !!from && end >= from;
+  const inRange = valid
+    ? bookings.filter((r) => !['completed', 'archived'].includes(r.status) && !!r.preferred_date && r.preferred_date >= from && r.preferred_date <= end).length
+    : 0;
+  const current = blocks.filter((b) => b.to_date >= today);
+
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (!valid) return setError('The last day must be on or after the first day.');
+    setBusy(true);
+    setError('');
+    const err = await onAdd(from, end, reason.trim() || null);
+    setBusy(false);
+    if (err) return setError(err);
+    setFrom('');
+    setTo('');
+    setReason('');
+  }
+
+  async function unblock(b: BlockedDate) {
+    if (!window.confirm(`Reopen ${rangeLabel(b.from_date, b.to_date)} for online bookings?`)) return;
+    const err = await onRemove(b.id);
+    if (err) setError(err);
+  }
+
+  return (
+    <form className="admin-resched admin-blockdates" style={{ marginBottom: 24 }} onSubmit={onSubmit}>
+      <div className="eyebrow">BLOCK DATES</div>
+      <p className="form-note" style={{ margin: '4px 0 14px' }}>
+        Customers can't book online on blocked days: every start time shows as booked. You can still add bookings yourself with + NEW BOOKING.
+      </p>
+      <div className="fields">
+        <div className="field">
+          <label htmlFor="bd-from">FIRST DAY</label>
+          <input id="bd-from" type="date" required min={today} value={from} onChange={(e) => setFrom(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="bd-to">LAST DAY</label>
+          <input id="bd-to" type="date" min={from || today} value={to} onChange={(e) => setTo(e.target.value)} />
+        </div>
+        <div className="field full">
+          <label htmlFor="bd-reason">REASON (OPTIONAL, ONLY YOU SEE THIS)</label>
+          <input id="bd-reason" maxLength={200} value={reason} onChange={(e) => setReason(e.target.value)} placeholder="Vacation, Reno Rodeo fleet job…" />
+        </div>
+      </div>
+      {inRange > 0 && (
+        <p className="form-note">
+          {inRange} existing booking{inRange === 1 ? ' falls' : 's fall'} in these dates. {inRange === 1 ? 'It stays' : 'They stay'} on the calendar; blocking only stops new online bookings.
+        </p>
+      )}
+      {error && <p className="form-note admin-error">{error}</p>}
+      <div className="admin-actions">
+        <button className="btn" disabled={busy || !valid} style={{ opacity: busy || !valid ? 0.5 : 1 }}>
+          {busy ? 'SAVING…' : valid ? `BLOCK ${rangeLabel(from, end).toUpperCase()}` : 'BLOCK DATES'}
+        </button>
+        <button type="button" className="btn ghost" onClick={onClose} disabled={busy}>CLOSE</button>
+      </div>
+
+      <div className="eyebrow" style={{ marginTop: 22 }}>CURRENTLY BLOCKED</div>
+      {current.length === 0 ? (
+        <p className="form-note" style={{ margin: '6px 0 0' }}>No dates are blocked.</p>
+      ) : (
+        <ul className="admin-blocklist">
+          {current.map((b) => (
+            <li key={b.id}>
+              <div>
+                <strong>{rangeLabel(b.from_date, b.to_date)}</strong>
+                {b.reason && <span>{b.reason}</span>}
+              </div>
+              <button type="button" className="filter" onClick={() => unblock(b)}>UNBLOCK</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </form>
   );
 }
 

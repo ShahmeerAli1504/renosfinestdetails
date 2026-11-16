@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { BOOKING_TIMES } from '../lib/business';
+import { BOOKING_TIMES, isBlockedDate, type BlockedRange } from '../lib/business';
 
 /* Admin calendar: month, week and list views of every booking (and, optionally, quote requests with a
    preferred date). Clicking a booking opens the full booking card with all its controls. */
@@ -81,13 +81,17 @@ export function Calendar<T extends CalRow>({
   loading,
   onRefresh,
   renderCard,
+  blocked = [],
 }: {
   rows: T[];
   loading: boolean;
   onRefresh: () => void;
   renderCard: (r: T) => ReactNode;
+  /** Date ranges closed to online bookings; shown hatched. */
+  blocked?: BlockedRange[];
 }) {
   const today = ymd(new Date());
+  const isBlocked = (d: string) => isBlockedDate(d, blocked);
   const [view, setView] = useState<View>(() =>
     typeof window !== 'undefined' && window.matchMedia('(max-width: 700px)').matches ? 'list' : 'month',
   );
@@ -205,14 +209,14 @@ export function Calendar<T extends CalRow>({
       </div>
 
       {view === 'month' && (
-        <MonthGrid monthStart={monthStart} monthEnd={monthEnd} today={today} selected={selected} byDay={byDay} onPickDay={pickDay} onOpen={openEvent} />
+        <MonthGrid monthStart={monthStart} monthEnd={monthEnd} today={today} selected={selected} byDay={byDay} isBlocked={isBlocked} onPickDay={pickDay} onOpen={openEvent} />
       )}
       {view === 'week' && (
-        <WeekGrid weekStart={weekStart} today={today} selected={selected} byDay={byDay} onPickDay={pickDay} onOpen={openEvent} />
+        <WeekGrid weekStart={weekStart} today={today} selected={selected} byDay={byDay} isBlocked={isBlocked} onPickDay={pickDay} onOpen={openEvent} />
       )}
       {view === 'list' && <ListView monthStart={monthStart} monthEnd={monthEnd} today={today} byDay={byDay} onOpen={openEvent} />}
 
-      {view !== 'list' && <DayPanel day={selected} today={today} list={byDay.get(selected) ?? []} onOpen={openEvent} />}
+      {view !== 'list' && <DayPanel day={selected} today={today} list={byDay.get(selected) ?? []} blocked={isBlocked(selected)} onOpen={openEvent} />}
 
       {open && (
         <div className="cal-drawer-bg" onClick={() => setOpenId(null)}>
@@ -240,6 +244,7 @@ function MonthGrid<T extends CalRow>({
   today,
   selected,
   byDay,
+  isBlocked,
   onPickDay,
   onOpen,
 }: {
@@ -248,6 +253,7 @@ function MonthGrid<T extends CalRow>({
   today: string;
   selected: string;
   byDay: Map<string, T[]>;
+  isBlocked: (d: string) => boolean;
   onPickDay: (d: string) => void;
   onOpen: (r: T) => void;
 }) {
@@ -263,11 +269,13 @@ function MonthGrid<T extends CalRow>({
         const key = ymd(d);
         const list = byDay.get(key) ?? [];
         const out = d.getMonth() !== monthStart.getMonth();
-        const cls = ['cal-cell', out && 'out', key === today && 'today', key === selected && 'sel', key < today && 'past'].filter(Boolean).join(' ');
+        const off = isBlocked(key);
+        const cls = ['cal-cell', out && 'out', key === today && 'today', key === selected && 'sel', key < today && 'past', off && 'blocked'].filter(Boolean).join(' ');
         return (
           <div key={key} className={cls} onClick={() => onPickDay(key)} role="button" tabIndex={0} onKeyDown={(e) => e.key === 'Enter' && onPickDay(key)}>
             <div className="cal-date">
               <span>{d.getDate()}</span>
+              {off && <b className="cal-blocked-tag">BLOCKED</b>}
               {list.length > 0 && <em>{list.length}</em>}
             </div>
             <div className="cal-chips">
@@ -305,6 +313,7 @@ function WeekGrid<T extends CalRow>({
   today,
   selected,
   byDay,
+  isBlocked,
   onPickDay,
   onOpen,
 }: {
@@ -312,6 +321,7 @@ function WeekGrid<T extends CalRow>({
   today: string;
   selected: string;
   byDay: Map<string, T[]>;
+  isBlocked: (d: string) => boolean;
   onPickDay: (d: string) => void;
   onOpen: (r: T) => void;
 }) {
@@ -332,6 +342,7 @@ function WeekGrid<T extends CalRow>({
               <button key={key} className={'cal-week-day' + (key === today ? ' today' : '') + (key === selected ? ' sel' : '')} onClick={() => onPickDay(key)}>
                 <span>{WEEKDAYS[d.getDay()]}</span>
                 <strong>{d.getDate()}</strong>
+                {isBlocked(key) && <b className="cal-blocked-tag">BLOCKED</b>}
               </button>
             );
           })}
@@ -359,7 +370,7 @@ function WeekGrid<T extends CalRow>({
             });
             const laneCount = Math.max(1, lanes.length);
             return (
-              <div key={key} className={'cal-col' + (key === today ? ' today' : '')} onClick={() => onPickDay(key)}>
+              <div key={key} className={'cal-col' + (key === today ? ' today' : '') + (isBlocked(key) ? ' blocked' : '')} onClick={() => onPickDay(key)}>
                 {hours.map((h) => (
                   <div key={h} className="cal-hline" style={{ top: (h - DAY_START) * HOUR_PX }} />
                 ))}
@@ -433,7 +444,7 @@ function EventRow<T extends CalRow>({ r, onOpen }: { r: T; onOpen: (r: T) => voi
   );
 }
 
-function DayPanel<T extends CalRow>({ day, today, list, onOpen }: { day: string; today: string; list: T[]; onOpen: (r: T) => void }) {
+function DayPanel<T extends CalRow>({ day, today, list, blocked, onOpen }: { day: string; today: string; list: T[]; blocked: boolean; onOpen: (r: T) => void }) {
   const d = parse(day);
   const takenTimes = new Map(list.filter((r) => r.kind === 'booking' && !isCancelled(r) && r.preferred_time).map((r) => [r.preferred_time!, r]));
   return (
@@ -445,6 +456,7 @@ function DayPanel<T extends CalRow>({ day, today, list, onOpen }: { day: string;
         </div>
         <span className="form-note">{list.length === 0 ? 'Nothing booked' : `${list.length} on the calendar`}</span>
       </div>
+      {blocked && <p className="form-note cal-blocked-note">Blocked: customers can't book this day online. Use BLOCK DATES above to reopen it.</p>}
       <div className="cal-slots">
         {BOOKING_TIMES.map((t) => {
           const r = takenTimes.get(t);
@@ -454,9 +466,9 @@ function DayPanel<T extends CalRow>({ day, today, list, onOpen }: { day: string;
               <span>{r.name.split(' ')[0]}</span>
             </button>
           ) : (
-            <div key={t} className="cal-slot">
+            <div key={t} className={'cal-slot' + (blocked ? ' blocked' : '')}>
               <b>{t}</b>
-              <span>Open</span>
+              <span>{blocked ? 'Blocked' : 'Open'}</span>
             </div>
           );
         })}

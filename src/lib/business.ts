@@ -61,13 +61,12 @@ export const BOOKING_TIMES = [
   '12:00 PM', '1:00 PM', '2:00 PM', '3:00 PM', '4:00 PM',
 ];
 
-/** Dates closed to new online bookings (inclusive, YYYY-MM-DD, Reno time). Every start time on these
- *  days shows as BOOKED. Add or remove ranges here as needed.
- *  Must match BLOCKED_DATES in supabase/functions/create-booking/index.ts exactly. */
-export const BLOCKED_DATES: { from: string; to: string }[] = [
-  { from: '2026-11-01', to: '2026-11-09' },
-];
-export const isBlockedDate = (d: string) => !!d && BLOCKED_DATES.some((r) => d >= r.from && d <= r.to);
+/** A date range closed to new online bookings (inclusive, YYYY-MM-DD, Reno time). The owner manages
+ *  these in /admin → Calendar → BLOCK DATES; they live in the blocked_dates table. Every start time
+ *  on these days shows as BOOKED, and the create-booking function rejects them too. */
+export type BlockedRange = { from_date: string; to_date: string };
+export const isBlockedDate = (d: string, ranges: BlockedRange[]) =>
+  !!d && ranges.some((r) => d >= r.from_date && d <= r.to_date);
 
 /** Square Web Payments settings (public values; the access token stays server-side). */
 const SQUARE_APP_ID = ((import.meta.env.VITE_SQUARE_APPLICATION_ID as string | undefined) ?? '').trim();

@@ -202,3 +202,16 @@
 }
 .admin-newbooking .fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
 .admin-badge.pay-waived{color:#4f9be0;border-color:#4f9be0}
+
+/* Blocked dates (closed to online bookings) */
+.cal-cell.blocked,.cal-col.blocked{background-image:repeating-linear-gradient(135deg,#0000 0 8px,#e23d3c1f 8px 16px)}
+.cal-blocked-tag{font-size:10px;font-weight:700;line-height:1;letter-spacing:.08em;color:#f26a68;margin-left:auto;margin-right:6px}
+.cal-week-day .cal-blocked-tag{display:block;margin:4px 0 0}
+.cal-blocked-note{color:#f26a68;margin:0 0 12px}
+.cal-slot.blocked{border-style:dashed;opacity:.6}
+.admin-blockdates{border-color:#e23d3c;background:#e23d3c10}
+.admin-blocklist{list-style:none;margin:10px 0 0;padding:0;display:grid;gap:6px}
+.admin-blocklist li{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid #3b4146;background:#121619}
+.admin-blocklist li div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.admin-blocklist li span{font-size:12px;color:#8b959c}
+@media(max-width:700px){.cal-cell .cal-blocked-tag{display:none}}
