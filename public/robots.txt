@@ -4,4 +4,4 @@ Allow: /
 Disallow: /admin
 Disallow: /admin/
 
-Sitemap: https://renosfinestdetails.com/sitemap.xml
+Sitemap: https://www.renosfinestdetails.com/sitemap.xml

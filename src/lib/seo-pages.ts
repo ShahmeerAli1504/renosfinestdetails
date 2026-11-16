@@ -12,7 +12,7 @@
  */
 
 /** The live domain, no trailing slash. */
-export const SITE_URL = 'https://renosfinestdetails.com';
+export const SITE_URL = 'https://www.renosfinestdetails.com';
 
 export const SITE_NAME = "Reno's Finest Details";
 
